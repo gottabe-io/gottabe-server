@@ -1,0 +1,12 @@
+server:
+  port: 8081
+gottabeio:
+  security:
+    keystorePath: ${KEYSTORE_LOCATION:./gottabe.keystore}
+    alias: ${KEYSTORE_ALIAS:gottabe}
+    password: ${KEYSTORE_PASS:gottabe}
+logging:
+  level:
+    org:
+      springframework:
+        web: TRACE

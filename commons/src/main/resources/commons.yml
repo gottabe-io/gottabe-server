@@ -1,0 +1,48 @@
+gottabeio:
+  siteName: GottaBe.io
+  siteAddress: 'https://gottabe.io/'
+  debug: true
+  cli:
+    client_id: ccb81ad6-62b7-407a-8a95-a8c31f656307
+  config:
+    autoActivate: true
+    salty:
+      password: ${PASSWORD_SALTY:salty}
+      activation: ${ACTIVATION_SALTY:salty}
+      recover: ${RECOVER_SALTY:salty}
+    mail:
+      smtpHost: ${SMTP_HOST}
+      smtpPort: ${SMTP_PORT}
+      fromMail: ${MAIL_FROM}
+      user: ${MAIL_USER}
+      pass: ${MAIL_PASS}
+  store:
+    useS3: false
+    base:
+      dir: ./data
+spring:
+  datasource:
+    driver-class-name: 'org.postgresql.Driver'
+    url: ${DATABASE_URL:jdbc:postgresql://localhost/gottabe}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASS:postgres}
+    testWhileIdle: true
+    validationQuery: SELECT 1
+    platform: postgres
+  jackson:
+    serialization-inclusion: non_null
+  jpa:
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: validate
+      dialect: org.hibernate.dialect.PostgreSQL9Dialect
+      naming:
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8081/api/.well-known/jwks.json
+flyway:
+  validateOnMigrate: false
