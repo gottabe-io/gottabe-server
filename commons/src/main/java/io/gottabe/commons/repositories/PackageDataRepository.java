@@ -1,5 +1,6 @@
 package io.gottabe.commons.repositories;
 
+import io.gottabe.commons.entities.BaseOwner;
 import io.gottabe.commons.entities.PackageData;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,8 +12,11 @@ import java.util.Optional;
 @Repository
 public interface PackageDataRepository extends CrudRepository<PackageData, Long> {
 
-    Page<PackageData> findByGroupName(String groupName, Pageable page);
+    Page<PackageData> findByGroupNameLike(String groupName, Pageable page);
 
     Optional<PackageData> findByGroupNameAndName(String groupName, String name);
 
+    Page<PackageData> findByGroupOwner(BaseOwner owner, Pageable page);
+
+    boolean existsByGroupNameAndName(String groupName, String packageName);
 }

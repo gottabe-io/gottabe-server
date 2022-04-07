@@ -4,6 +4,15 @@ gottabeio:
   debug: true
   cli:
     client_id: ccb81ad6-62b7-407a-8a95-a8c31f656307
+    token:
+      expiration: 0
+      refresh: 0
+  server:
+    client_id: 4dae1aa5-8200-4f06-ba0c-8786f64f01c0
+    client_password: ac1ecd02-9e0c-4883-a0f0-c62dd5cccdc3
+    token:
+      expiration: 36000
+      refresh: 604800
   config:
     autoActivate: true
     salty:
@@ -20,6 +29,7 @@ gottabeio:
     useS3: false
     base:
       dir: ./data
+    tokens: jdbc
 spring:
   datasource:
     driver-class-name: 'org.postgresql.Driver'

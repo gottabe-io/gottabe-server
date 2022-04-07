@@ -7,23 +7,14 @@
         <version>1.0.0</version>
     </parent>
     <artifactId>user-services</artifactId>
-    <name>Minesweeper User services</name>
-    <description>Manages the user access for Minesweeper game</description>
+    <name>Gottabe.io User services</name>
+    <description>Manages the user access for Gottabe.io</description>
 
     <dependencies>
         <dependency>
             <groupId>io.gottabe</groupId>
             <artifactId>commons</artifactId>
             <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security.oauth.boot</groupId>
-            <artifactId>spring-security-oauth2-autoconfigure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>8.19</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
@@ -46,5 +37,6 @@
             </plugin>
         </plugins>
     </build>
+
 
 </project>

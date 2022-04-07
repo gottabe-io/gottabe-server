@@ -20,7 +20,10 @@ export const style = css`
 	label {
 		width: 100%;
 		color: white;
-	}
+	} 
+    textarea:focus, input:focus{
+        outline: none;
+    }
     input:not([type='checkbox']):not([type='radio']), button {
 		padding: 4px;
 		width: calc(100% - 8px);

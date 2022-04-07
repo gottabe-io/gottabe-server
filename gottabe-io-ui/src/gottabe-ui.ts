@@ -1,16 +1,19 @@
 import { LitElement, html, customElement, property, css } from 'lit-element';
-import { router, navigator } from 'lit-element-router';
-import PubSub from 'pubsub-js';
-import http from './http-service';
-import './login-form';
-import './register';
-import './activate';
-import './home-not-logged';
-import './home-logged';
-import './profile-page';
-import './tokens-page';
+import {router, navigator} from './util/router';
+import {pubSubService} from './util/pupsub-services';
+import http from './services/http-service';
+import './pages/login-form';
+import './pages/register';
+import './pages/activate';
+import './pages/home-not-logged';
+import './pages/home-logged';
+import './pages/profile-page';
+import './pages/tokens-page';
+import './pages/my-packages-page';
+import './pages/group-page';
 import {Md5} from 'ts-md5/dist/md5';
-import { Match, UserData, MenuItem } from './types';
+import { UserData, MenuItem } from './types';
+import * as userServices from './services/user-services';
 
 const TOPIC_NAME = 'gottabe.credentials';
 
@@ -27,6 +30,8 @@ const USER_MENU : MenuItem[] = [
 	{ label: 'Manage Tokens', url: '/tokens',   icon: ''},
 	{ label: 'Logout',        url: '/logout',   icon: ''}
 ];
+
+pubSubService.init(userServices.TOPIC_NAME, userServices.STORAGE_KEY);
 
 @customElement("gottabe-app")
 @router
@@ -61,6 +66,9 @@ class GottabeApp extends LitElement {
 		},  {
 			name: 'packages',
 			pattern: 'packages/:groupName'
+		},  {
+			name: 'my-packages',
+			pattern: 'packages'
 		}, {
 			name: 'package',
 			pattern: 'package/:groupName/:packageName'
@@ -119,7 +127,9 @@ class GottabeApp extends LitElement {
 				text-decoration: none;
 				color: white;
 			}
-
+			textarea:focus, input:focus{
+				outline: none;
+			}
 			.search-input {
 				border: #708090;
 				border-radius: 0.5em 0px 0px 0.5em;
@@ -224,12 +234,6 @@ class GottabeApp extends LitElement {
 	})
 	userData: UserData | undefined;
 
-	@property({
-		type: Object,
-		attribute: false
-	})
-	match: Match | undefined;
-
 	@property({ type: String })
 	route: string;
 	@property({ type: Object })
@@ -240,27 +244,12 @@ class GottabeApp extends LitElement {
 	constructor() {
 		super();
 		this.route = '';
-		const assignUser = ((user: any) => {
-			this.userData = user;
-		}).bind(this);
-		PubSub.subscribe(TOPIC_NAME, ((_msg: any, value: any) => {
-			console.log(_msg,value);
-			if (!value.authToken) {
-				this.userData = undefined;
-			} else {
-				http.defaultHttpClient.get('/api/user/current', {})
-					.then(resp => resp.json().then(assignUser));
-				// http.get('/api/hiscores/user/10', {}).then(resp => resp.json().then(((v:any) => this.lastGames = v).bind(this)));
-			}
-		}).bind(this));
-		// http.get('/api/hiscores/10', {}).then(resp => resp.json().then(((v:any) => this.hiScores = v).bind(this)));
 	}
 
-	router(route: string, params: any, query: any, data: any) {
+	router(route: string, params: any, query: any) {
 		this.route = route;
 		this.params = params;
 		this.query = query;
-		console.log(route, params, query, data);
 	}
 
 	render() {
@@ -285,8 +274,9 @@ class GottabeApp extends LitElement {
 					'register' : html`<register-form></register-form>`,
 					'activate' : html`<activate-form code="${this.params.activationCode}"></activate-form>`,
 					'profile' : html`<profile-page></profile-page>`,
-					'packages' : html`<packages code="${this.userData}"></packages>`,
-					'tokens' : html`<tokens-page code="${this.userData}"></tokens-page>`,
+					'my-packages' : html`<my-packages-page code="${this.userData}"></my-packages-page>`,
+					'packages' : html`<group-page groupName="${this.params.groupName}"></group-page>`,
+                    'tokens' : html`<tokens-page code="${this.userData}"></tokens-page>`,
 					'logout' : (() => this._logout()).bind(this)
 					}, html`<h1>Not found</h1>`)
                 }
@@ -295,6 +285,7 @@ class GottabeApp extends LitElement {
 	}
 
 	mapRoutes(map: any, def: any) {
+		console.log(this.route);
 		let ret = map[this.route];
 		if (ret) {
 			if (typeof ret === 'function')
@@ -331,6 +322,18 @@ class GottabeApp extends LitElement {
 
 	connectedCallback() {
 		super.connectedCallback();
+		const assignUser = ((user: any) => {
+			this.userData = user;
+			pubSubService.publish(userServices.TOPIC_NAME, user);
+		}).bind(this);
+		pubSubService.subscribe(TOPIC_NAME, ((_msg: any, value: any) => {
+			if (!value.authToken) {
+				assignUser(undefined);
+			} else {
+				http.defaultHttpClient.get('/api/user/current', {})
+					.then(resp => resp.json().then(assignUser));
+			}
+		}).bind(this));
 	}
 
 	handleMenuItem(e: MouseEvent) {

@@ -5,6 +5,26 @@ export interface MenuItem {
     icon: string;
 };
 
+export interface Owner {
+
+    id: string;
+
+    name: string;
+
+    email: string;
+
+    nickname: string;
+
+    githubAccount: string;
+
+    twitterAccount: string;
+
+    description: string;
+
+    createTime: string;
+
+}
+
 export interface UserData {
 
 	id?: string;
@@ -40,30 +60,42 @@ export interface UserPrivacy {
 export interface ManagedToken {
     token: string;
     expireDate: string;
-    id: string;
+    creationDate: string;
 }
 
 
-export interface Match {
+export interface PackageGroup {
 
-	id: number;
+    name?: string;
 
-    startTime: string;
+    description?: string;
 
-    endTime: string;
+    owner?: Owner;
 
-    width: number;
+}
 
-    height: number;
+export interface PackageRelease {
 
-    mines: number;
+    version: string;
 
-    minesDiscovered: number;
+    releaseDate: string;
 
-    cleared: number;
+    description: string;
 
-    status: string;
+    sourceUrl: string;
 
-    data: string;
+    issuesUrl: string;
 
-};
+    documentationUrl: string;
+
+}
+
+export interface PackageData {
+
+    name: string;
+
+    group: PackageGroup;
+
+    releases?: PackageRelease[];
+
+}

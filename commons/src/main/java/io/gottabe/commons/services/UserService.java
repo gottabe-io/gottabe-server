@@ -56,7 +56,7 @@ public class UserService extends AbstractCrudService<User, Long> {
     private Messages messages;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder2;
 
     @Autowired
     private FileStore fileStore;
@@ -100,7 +100,7 @@ public class UserService extends AbstractCrudService<User, Long> {
         User user = UserMapper.INSTANCE.voToUser(userVo);
         if (!Objects.equals(userVo.getPassword(), userVo.getConfirmPassword()))
             throw new InvalidRequestException("user.password.dont_match");
-        user.setPassword(passwordEncoder.encode(userVo.getPassword()));
+        user.setPassword(passwordEncoder2.encode(userVo.getPassword()));
         if (autoActivateUser) {
             user.setActivationCode(null);
             user.setActivationExpires(new Date());
@@ -169,7 +169,7 @@ public class UserService extends AbstractCrudService<User, Long> {
             throw new InvalidRequestException("user.recover.expired");
         }
         user.setRecoveryCode(null);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder2.encode(password));
         save(user);
         emailService.sendMailUser(UserMapper.INSTANCE.userToVO(user), messages.getString("user.recovery_success.subject"), "recovery_success");
     }
@@ -210,6 +210,11 @@ public class UserService extends AbstractCrudService<User, Long> {
 
     public void updatePrivacy(User user, UserPrivacyOptions privacyOptionsNew) {
         UserPrivacyOptions privacyOptions = user.getPrivacyOptions();
+        if (privacyOptions == null) {
+            privacyOptions = new UserPrivacyOptions();
+            privacyOptions.setUser(user);
+            user.setPrivacyOptions(privacyOptions);
+        }
         privacyOptions.setShowEmail(privacyOptionsNew.isShowEmail());
         privacyOptions.setShowTwitter(privacyOptionsNew.isShowTwitter());
         privacyOptions.setShowGithub(privacyOptionsNew.isShowGithub());
@@ -236,7 +241,7 @@ public class UserService extends AbstractCrudService<User, Long> {
         if (!passwordVo.getPassword().equals(passwordVo.getPasswordConfirmation())) {
             throw new InvalidRequestException("user.password.dont_match");
         }
-        user.setPassword(passwordEncoder.encode(passwordVo.getPassword()));
+        user.setPassword(passwordEncoder2.encode(passwordVo.getPassword()));
         save(user);
         emailService.sendMailUser(UserMapper.INSTANCE.userToVO(user), messages.getString("user.recovery_success.subject"), "recovery_success");
     }

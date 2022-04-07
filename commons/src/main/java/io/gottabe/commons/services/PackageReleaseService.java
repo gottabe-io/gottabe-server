@@ -46,4 +46,8 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
                 .documentationUrl(build.getDocumentationUrl())
                 .build());
     }
+
+    public Optional<PackageRelease> findOneByPackageDataOrderByReleaseDateDesc(PackageData pack) {
+        return getRepository().findOneByPackageDataOrderByReleaseDateDesc(pack);
+    }
 }

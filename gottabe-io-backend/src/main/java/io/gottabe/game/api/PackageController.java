@@ -1,15 +1,15 @@
 package io.gottabe.game.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gottabe.commons.entities.PackageData;
-import io.gottabe.commons.entities.PackageFile;
-import io.gottabe.commons.entities.PackageGroup;
-import io.gottabe.commons.entities.PackageRelease;
+import io.gottabe.commons.entities.*;
+import io.gottabe.commons.enums.OrgUserRole;
+import io.gottabe.commons.exceptions.AccessDeniedException;
 import io.gottabe.commons.exceptions.GottabeException;
 import io.gottabe.commons.exceptions.InvalidRequestException;
 import io.gottabe.commons.exceptions.ResourceNotFoundException;
 import io.gottabe.commons.mapper.PackageDataMapper;
 import io.gottabe.commons.mapper.PackageGroupMapper;
+import io.gottabe.commons.mapper.PackageReleaseMapper;
 import io.gottabe.commons.services.*;
 import io.gottabe.commons.util.Messages;
 import io.gottabe.commons.vo.PackageDataVO;
@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,6 +60,21 @@ public class PackageController {
     @Autowired
     private Messages messages;
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("mine")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PackageDataVO>> myPackages(@RequestParam(value = "page", required = false) Integer page,
+                                                          @RequestParam(value = "size", required = false) Integer size) {
+        Page<PackageData> pages = packageDataService.findByOwner(userService.currentUser(),
+                page != null ? page : 0, size != null ? size : 25);
+        List<PackageDataVO> packages = pages.stream()
+                .map(PackageDataMapper.INSTANCE::packageToVO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok()
+                .header("RESULT_COUNT", String.valueOf(pages.getTotalElements()))
+                .body(packages);
+    }
+
     @GetMapping("all")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PackageGroupVO>> groups(@RequestParam("groupName") String groupName,
@@ -86,12 +102,20 @@ public class PackageController {
     @GetMapping("{groupName}/all")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PackageDataVO>> groupPackages(@PathVariable("groupName") String groupName,
+                                                             @RequestParam(value = "fetch", required = false) String fetch,
                                                              @RequestParam(value = "page", required = false) Integer page,
                                                              @RequestParam(value = "size", required = false) Integer size) {
-        Page<PackageData> pages = packageDataService.findByGroup(groupName,
+        Page<PackageData> pages = packageDataService.findByGroupLike(groupName + "%",
                 page != null ? page : 0, size != null ? size : 25);
         List<PackageDataVO> packages = pages.stream()
-                .map(PackageDataMapper.INSTANCE::packageToVO)
+                .map(pack -> {
+                    PackageDataVO vo = PackageDataMapper.INSTANCE.packageToVO(pack);
+                    if ("LATEST_RELEASE".equals(fetch))
+                        vo.setReleases(packageReleaseService.findOneByPackageDataOrderByReleaseDateDesc(pack).stream()
+                                .map(PackageReleaseMapper.INSTANCE::releaseToVO)
+                                .collect(Collectors.toList()));
+                    return vo;
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok()
                 .header("RESULT_COUNT", String.valueOf(pages.getTotalElements()))
@@ -114,6 +138,41 @@ public class PackageController {
         return ResponseEntity.ok(packageRelease);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PostMapping
+    @Transactional
+    public ResponseEntity<Void> createGroup(@Valid @RequestBody PackageGroupVO groupVo) throws IOException {
+        if (packageGroupService.findByGroupName(groupVo.getName()).isPresent()) {
+            throw new InvalidRequestException("group.already.exists");
+        }
+        PackageGroup group = PackageGroup.builder()
+                .name(groupVo.getName())
+                .owner(userService.currentUser())
+                .description(groupVo.getDescription())
+                .build();
+        packageGroupService.save(group);
+        return ResponseEntity.status(201).build();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PostMapping("{groupName}")
+    @Transactional
+    public ResponseEntity<Void> createPackage(@PathVariable("groupName") String groupName,
+                                              @Valid @RequestBody PackageDataVO dataVo) throws IOException {
+        PackageGroup group = packageGroupService.findByGroupName(groupName).orElseThrow(() -> new InvalidRequestException(messages.format("group.invalid")));
+        checkWritePermission(group.getOwner());
+        if (packageDataService.existsByGroupAndName(groupName, dataVo.getName())) {
+            throw new InvalidRequestException("package.already.exists");
+        }
+        PackageData data = PackageData.builder()
+                .group(group)
+                .name(dataVo.getName())
+                .build();
+        packageDataService.save(data);
+        return ResponseEntity.status(201).build();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_CLI')")
     @PostMapping("{groupName}/{packageName}/{version}/build.json")
     @Transactional
     public ResponseEntity<Void> createPackage(@PathVariable("groupName") String groupName,
@@ -124,6 +183,7 @@ public class PackageController {
             throw new InvalidRequestException("package.version.already.exists");
         }
         PackageGroup group = packageGroupService.findByGroupName(groupName).orElseThrow(() -> new InvalidRequestException(messages.format("group.invalid")));
+        checkWritePermission(group.getOwner());
         PackageData packageData = packageDataService.getOrCreate(group, packageName);
 
         PackageRelease release = packageReleaseService.createRelease(version, build, packageData);
@@ -144,6 +204,20 @@ public class PackageController {
         return ResponseEntity.status(201).build();
     }
 
+    private void checkWritePermission(BaseOwner owner) {
+        if (owner instanceof User) {
+            if (userService.currentUser().equals(owner))
+                return;
+        } else if (owner instanceof Organization) {
+            Organization org = (Organization) owner;
+            if (org.getUsers().stream()
+                    .anyMatch(orgUser -> orgUser.getUser().equals(userService.currentUser())
+                            && orgUser.getRole().ordinal() >= OrgUserRole.DEVELOPER.ordinal()))
+                return;
+        }
+        throw new AccessDeniedException();
+    }
+
     private List<String> getFileNames(BuildDescriptor build) {
         List<String> result = new ArrayList<>();
         if (build.getTargets() != null)
@@ -159,6 +233,7 @@ public class PackageController {
         return build.getArtifactId() + target.getArch() + '_' + target.getPlatform() + '_' + target.getToolchain() + ".zip";
     }
 
+    @PreAuthorize("hasAuthority('ROLE_CLI')")
     @PostMapping("{groupName}/{packageName}/{version}")
     @Transactional
     public ResponseEntity<Void> postPackageFile(@PathVariable("groupName") String groupName,

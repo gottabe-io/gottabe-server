@@ -1,5 +1,5 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
-import {UserData} from "./types";
+import {UserData} from "../types";
 
 @customElement("home-logged")
 class HomeLogged extends LitElement {

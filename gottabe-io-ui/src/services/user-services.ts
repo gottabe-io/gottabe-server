@@ -1,5 +1,5 @@
 import http from './http-service';
-import {UserPrivacy, UserProfile} from "./types";
+import {UserPrivacy, UserProfile} from "../types";
 
 const BASE_USER_URL = '/api/user';
 const httpClient = http.defaultHttpClient;
@@ -60,3 +60,6 @@ const UserService = http.RestService(BASE_USER_URL, class {
 const userService : any = new UserService();
 
 export default userService;
+
+export const TOPIC_NAME = 'gottabe.user_data';
+export const STORAGE_KEY = 'gottabe.data.mySelf';

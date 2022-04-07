@@ -1,7 +1,7 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { navigator } from 'lit-element-router';
-import http from './http-service';
-import {style} from './styles';
+import http from '../services/http-service';
+import {style} from '../styles';
 
 @customElement("login-form")
 @navigator

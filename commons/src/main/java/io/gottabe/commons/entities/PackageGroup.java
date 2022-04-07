@@ -28,7 +28,7 @@ public class PackageGroup extends AbstractEntity {
     @Column(length = 1000, nullable = false)
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private BaseOwner owner;
 
 }

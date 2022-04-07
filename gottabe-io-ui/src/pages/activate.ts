@@ -1,6 +1,6 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import userService from './user-services';
-import {style} from './styles';
+import userService from '../services/user-services';
+import {style} from '../styles';
 
 @customElement("activate-form")
 class ActivationForm extends LitElement {

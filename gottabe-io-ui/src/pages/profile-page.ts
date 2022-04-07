@@ -1,8 +1,8 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
-import {UserPrivacy, UserProfile} from "./types";
-import userService from './user-services';
-import {style} from './styles';
-import {Timer} from './mutex';
+import {UserPrivacy, UserProfile} from "../types";
+import userService from '../services/user-services';
+import {style} from '../styles';
+import {Timer} from '../util/mutex';
 
 @customElement("profile-page")
 class ProfilePage extends LitElement {
@@ -138,11 +138,14 @@ class ProfilePage extends LitElement {
 
 	connectedCallback() {
 		super.connectedCallback();
-		this._updateData().catch(((e:any) => this.error = e.message).bind(this));
+		this._updateData().catch(((e:any) => {
+			this.error = e.message;
+		}).bind(this));
 		this.mode = 'data';
 	}
 
 	private async _updateData() {
+		this.error = '';
 		this.profile = await userService.profile();
 		this.privacy = await userService.privacy();
 	}

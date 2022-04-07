@@ -191,7 +191,7 @@ public class UserController {
 
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PostMapping("/current/tokens")
-	public ResponseEntity<Void> createToken() {
+	public ResponseEntity<Void> createToken() throws IOException {
 		User user = userService.currentUser();
 		managedTokenService.createToken(user);
 		return ResponseEntity.status(HttpStatus.CREATED).build();

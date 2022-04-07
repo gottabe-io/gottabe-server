@@ -22,19 +22,21 @@
     );
 
     create table oauth_access_token (
-        token_id varchar(256),
-        token bytea,
-        authentication_id varchar(256),
+        token_id varchar(256) primary key,
+        refresh_id varchar(256),
         user_name varchar(256),
         client_id varchar(256),
-        authentication bytea,
-        refresh_token varchar(256)
+        expires_at timestamp,
+        creation timestamp,
+        authentication bytea
     );
 
     create table oauth_refresh_token (
+        refresh_id varchar(256) primary key,
         token_id varchar(256),
-        token bytea,
-        authentication bytea
+        user_name varchar(256),
+        client_id varchar(256),
+        expires_at timestamp
     );
 
     create table oauth_code (

@@ -17,4 +17,6 @@ public class ManagedTokenVO {
 
     private Date expireDate;
 
+    private Date creationDate;
+
 }

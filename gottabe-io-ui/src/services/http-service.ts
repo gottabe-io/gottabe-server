@@ -1,5 +1,5 @@
 import PubSub from 'pubsub-js';
-import { Mutex } from './mutex';
+import { Mutex } from '../util/mutex';
 
 const TOPIC_NAME = 'gottabe.credentials';
 const LOCAL_STORE_KEY = 'gottabe.data.Iamback';
@@ -349,7 +349,8 @@ const initStates = () => {
 };
 
 const revokeToken = () : Promise<void|Response> => {
-    return withAuthHttpClient.post('/oauth/revoke/' + credentials.refreshToken, { body: null })
+    let data = new FormData();
+    return withAuthHttpClient.post('/oauth/revoke/' + credentials.authToken, { body: data })
         .then((_res: any) => {
             PubSub.publishSync(TOPIC_NAME,{authToken: null, refreshToken: null});
         });
@@ -361,7 +362,6 @@ const requestNoAuth = (url:string, options:any) : Promise<Response> => {
     return new Promise((resolve, reject) => {
         fetch(url, options)
             .then(resp => {
-                console.log(resp);
                 if (resp.status >= 400 || resp.status < 100) {
                     let error : any = new Error('HTTP status ' + resp.status + ': ' + resp.statusText);
                     error.response = resp;
@@ -396,12 +396,9 @@ const refreshStatus = { needUpdate: false };
 
 const requestAutoLogin = async(url:string, options:any) : Promise<Response> => {
     try {
-        console.log('Waiting before Request: ' + url);
         await refreshMutex.wait(2000);
-        console.log('Request: ' + url);
         return await requestWithAuth(url, options);
     } catch (e: any) {
-        console.log('error: ' ,e);
         if (e.response.status == 401 || e.response.status == 403) {
             if (!refreshStatus.needUpdate) {
                 refreshStatus.needUpdate = true;
@@ -423,7 +420,6 @@ const login = async(authData: any) => {
 const refreshToken = async() => {
     if (!credentials.refreshToken) throw new Error("Cannot refresh token");
     refreshMutex.lock();
-    console.log('Trying to refresh the token');
     let authData = new FormData();
     authData.append("refresh_token", credentials.refreshToken)
     authData.append("grant_type", "refresh_token");
@@ -436,14 +432,12 @@ const refreshToken = async() => {
         });
         let v: any = await res.json();
         PubSub.publishSync(TOPIC_NAME, {authToken: v.access_token, refreshToken: v.refresh_token});
-        console.log('Success refreshing the token');
         refreshMutex.unlock();
         return res;
     } catch(e:any) {
         if (e.response.status >= 400 || e.response.status < 100) {
             PubSub.publishSync(TOPIC_NAME,{authToken:null, refreshToken: null});
         }
-        console.log('Failed to refresh the token');
         refreshMutex.unlock();
         throw e;
     }

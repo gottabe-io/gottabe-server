@@ -1,28 +1,3 @@
-/*
-import {Mutex} from 'async-mutex';
-
-export class MMutex {
-    _mutex: Mutex;
-    _release:any;
-    constructor() {
-        this._mutex = new Mutex();
-    }
-    wait(_millis:number): Promise<any> {
-        if (this._release)
-            return this._mutex.waitForUnlock();
-        else
-            return Promise.resolve();
-    }
-    lock() {
-        if (!this._release)
-            this._release = this._mutex.acquire();
-    }
-    unlock() {
-        if (this._release) this._release();
-        this._release = null;
-    }
-}
-*/
 
 export class Mutex {
     private timeoutIds: Array<any>;
@@ -34,14 +9,12 @@ export class Mutex {
         this.locked = false;
     }
     wait(milliseconds: number): Promise<any> {
-        console.log('Waiting mutex');
         let that = this;
         return new Promise((resolve, reject) => {
             if (!that.locked) resolve(that);
             else {
                 that.resolvers.push(resolve);
                 that.timeoutIds.push(setTimeout(() => {
-                    console.log('Mutex timeout');
                     reject(new Error("Wait timeout."));
                 }, milliseconds));
             }
@@ -49,13 +22,11 @@ export class Mutex {
     }
     lock() {
         if (this.locked) throw new Error("Mutex is already locked.");
-        console.log('Mutex locked');
         this.locked = true;
     }
     unlock() {
         let that = this;
         if (this.locked) {
-            console.log('Mutex unlocked');
             this.locked = false;
             this.timeoutIds.forEach(clearTimeout);
             this.resolvers.forEach(resolve => resolve(that));
