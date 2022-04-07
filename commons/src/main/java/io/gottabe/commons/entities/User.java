@@ -9,7 +9,6 @@ import java.util.Date;
 @Table(name = "tbs_user")
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "id" }, callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -40,6 +39,7 @@ public class User extends BaseOwner {
     private Date dtLocked;
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ToString.Exclude
     private UserPrivacyOptions privacyOptions;
 
 }

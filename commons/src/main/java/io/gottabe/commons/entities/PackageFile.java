@@ -1,8 +1,10 @@
 package io.gottabe.commons.entities;
 
 import lombok.*;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "tbs_package_file", indexes = {
@@ -10,7 +12,6 @@ import javax.persistence.*;
 })
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"id"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -22,6 +23,7 @@ public class PackageFile extends AbstractEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private PackageRelease release;
 
     @Column(length = 200)

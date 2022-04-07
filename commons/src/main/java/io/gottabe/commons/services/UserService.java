@@ -101,6 +101,7 @@ public class UserService extends AbstractCrudService<User, Long> {
         if (!Objects.equals(userVo.getPassword(), userVo.getConfirmPassword()))
             throw new InvalidRequestException("user.password.dont_match");
         user.setPassword(passwordEncoder2.encode(userVo.getPassword()));
+        user.setPrivacyOptions(new UserPrivacyOptions());
         if (autoActivateUser) {
             user.setActivationCode(null);
             user.setActivationExpires(new Date());

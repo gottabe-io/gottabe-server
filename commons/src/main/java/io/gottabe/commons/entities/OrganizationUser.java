@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Table(name = "tbs_organization_user", indexes = @Index(unique = true, name = "uk_orguser_org_user", columnList = "organization_id, user_id"))
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "id" })
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -22,9 +21,11 @@ public class OrganizationUser extends AbstractEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private Organization organization;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private User user;
 
     private OrgUserRole role;

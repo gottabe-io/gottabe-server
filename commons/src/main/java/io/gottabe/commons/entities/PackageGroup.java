@@ -11,7 +11,6 @@ import javax.persistence.*;
 })
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "id" })
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

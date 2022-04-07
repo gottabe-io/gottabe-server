@@ -9,7 +9,6 @@ import java.util.List;
 @Table(name = "tbs_package_data", indexes = @Index(unique = true, columnList = "group_id, name", name = "idx_packdata_groupname"))
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "id" })
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -24,9 +23,11 @@ public class PackageData extends AbstractEntity {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private PackageGroup group;
 
     @OneToMany(mappedBy = "packageData", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private List<PackageRelease> releases;
 
 }

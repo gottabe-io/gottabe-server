@@ -9,7 +9,6 @@ import java.util.List;
 @Table(name = "tbs_organization")
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "getId()" }, callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -17,9 +16,11 @@ import java.util.List;
 public class Organization extends BaseOwner {
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private User owner;
 
     @OneToMany(mappedBy = "organization", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private List<OrganizationUser> users;
 
 }

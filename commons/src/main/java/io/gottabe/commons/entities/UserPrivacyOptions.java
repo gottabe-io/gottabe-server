@@ -9,7 +9,6 @@ import javax.persistence.*;
 @Table(name = "tbs_user_privacy_ops", indexes = @Index(unique = true, name = "uk_privacy_user", columnList = "user_id"))
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "id" })
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -21,6 +20,7 @@ public class UserPrivacyOptions extends AbstractEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private User user;
 
     private boolean showEmail;

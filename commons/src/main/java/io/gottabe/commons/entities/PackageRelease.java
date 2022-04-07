@@ -12,7 +12,6 @@ import java.util.List;
 })
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -27,6 +26,7 @@ public class PackageRelease extends AbstractEntity {
     private String version;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
     private PackageData packageData;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -45,6 +45,7 @@ public class PackageRelease extends AbstractEntity {
     private String documentationUrl;
 
     @OneToMany(mappedBy = "release", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private List<PackageFile> files;
 
 }
