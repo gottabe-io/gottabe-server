@@ -13,6 +13,11 @@ const PackageService = http.RestService(BASE_USER_URL, class {
         if (params) options.params = params;
         return await (await httpClient.get(BASE_USER_URL + '/' + groupName + '/all', options)).json();
     }
+    async package(groupName: string, packageName: string, params?: any): Promise<PackageData[]> {
+        let options:any = {};
+        if (params) options.params = params;
+        return await (await httpClient.get(BASE_USER_URL + '/' + groupName + '/' + packageName, options)).json();
+    }
     async createGroup(group: PackageGroup) {
         return await httpClient.post(BASE_USER_URL, http.createPostOptions(group));
     }

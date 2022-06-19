@@ -12,6 +12,7 @@ import io.gottabe.userservices.services.ManagedTokenService;
 import io.gottabe.commons.store.ObjectSummary;
 import io.gottabe.commons.util.Messages;
 import io.gottabe.commons.vo.*;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -54,7 +55,7 @@ public class UserController {
 	}
 
 	@PreAuthorize("!hasAuthority('ROLE_USER')")
-	@PostMapping("resendActivation")
+	@PostMapping("resend-activation")
 	public ResponseEntity<Void> resendActivationCode(@RequestParam(value = "email", required = true) String email, HttpServletRequest request) throws Exception {
 		userService.resendActivationCode(email);
 		return ResponseEntity.status(HttpStatus.OK).build();
@@ -68,8 +69,8 @@ public class UserController {
 	}
 
 	@GetMapping("/{id}/avatar")
-	public ResponseEntity<Resource> avatar(@PathVariable("id") String id, WebRequest request) {
-		return getAvatar(userService.getAvatar(id), request);
+	public ResponseEntity<Resource> avatar(@PathVariable("id") String id) {
+		return getAvatar(userService.getAvatar(id));
 	}
 
 	@PreAuthorize("!hasAuthority('ROLE_USER')")
@@ -113,16 +114,19 @@ public class UserController {
 		return ResponseEntity.ok().build();
 	}
 
+	@Autowired
+	private WebRequest request;
+
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@RequestMapping(path = "/current/avatar", method = RequestMethod.GET)
-	public ResponseEntity<Resource> getAvatar(WebRequest request) throws IOException {
+	public ResponseEntity<Resource> getAvatar() throws IOException {
 
 		Optional<ObjectSummary> opAvatar = userService.getAvatar();
 
-		return getAvatar(opAvatar, request);
+		return getAvatar(opAvatar);
 	}
 
-	private ResponseEntity<Resource> getAvatar(Optional<ObjectSummary> opAvatar, WebRequest request) {
+	private ResponseEntity<Resource> getAvatar(Optional<ObjectSummary> opAvatar) {
 		ObjectSummary avatar = opAvatar.orElseThrow(ResourceNotFoundException::new);
 
 		if (request.checkNotModified(avatar.getLastModified().getTime()) || request.checkNotModified(avatar.getETag())) {

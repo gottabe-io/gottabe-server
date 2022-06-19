@@ -357,7 +357,7 @@ const revokeToken = () : Promise<void|Response> => {
 }
 
 const requestNoAuth = (url:string, options:any) : Promise<Response> => {
-    if (!url.startsWith('http://') && !url.startsWith('https://') && config.baseUrl)
+    if (config.baseUrl && !url.startsWith('http://') && !url.startsWith('https://'))
         url = config.baseUrl + (config.baseUrl.startsWith('/') ? '' : '/') + (url.startsWith('/') ? url.substring(1) : url);
     return new Promise((resolve, reject) => {
         fetch(url, options)

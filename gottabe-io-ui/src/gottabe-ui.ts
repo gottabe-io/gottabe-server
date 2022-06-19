@@ -11,6 +11,7 @@ import './pages/profile-page';
 import './pages/tokens-page';
 import './pages/my-packages-page';
 import './pages/group-page';
+import './pages/package-page';
 import {Md5} from 'ts-md5/dist/md5';
 import { UserData, MenuItem } from './types';
 import * as userServices from './services/user-services';
@@ -71,7 +72,7 @@ class GottabeApp extends LitElement {
 			pattern: 'packages'
 		}, {
 			name: 'package',
-			pattern: 'package/:groupName/:packageName'
+			pattern: 'packages/:groupName/:packageName'
 		}, {
 			name: 'not-found',
 			pattern: '*'
@@ -276,6 +277,7 @@ class GottabeApp extends LitElement {
 					'profile' : html`<profile-page></profile-page>`,
 					'my-packages' : html`<my-packages-page code="${this.userData}"></my-packages-page>`,
 					'packages' : html`<group-page groupName="${this.params.groupName}"></group-page>`,
+					'package' : html`<package-page groupName="${this.params.groupName}" packageName="${this.params.packageName}"></package-page>`,
                     'tokens' : html`<tokens-page code="${this.userData}"></tokens-page>`,
 					'logout' : (() => this._logout()).bind(this)
 					}, html`<h1>Not found</h1>`)

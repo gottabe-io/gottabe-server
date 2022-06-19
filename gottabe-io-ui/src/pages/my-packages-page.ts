@@ -92,7 +92,9 @@ class MyPackagesPage extends LitElement {
                     <tr><th>Package</th><th>Versions</th><th>Date</th><th>Actions</th></tr>
                     ${this.packages.map((this._package).bind(this))}
                 </table>
-                ` : html``}
+                ` : html`
+                    
+                `}
             </div>
             <my-dialog id="groupDlg" showCancel="true">
                 <div slot="caption">Dialog</div>

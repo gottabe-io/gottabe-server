@@ -41,7 +41,7 @@ public class TokenController {
 
     @PostMapping("token")
     public ResponseEntity<OAuth2Token> authenticate(@RequestParam Map<String, String> parameters,
-                                                    HttpServletRequest httpRequest) throws IOException {
+                                                   HttpServletRequest httpRequest) throws IOException {
         Oauth2AuthenticationRequest request = getOauth2AuthenticationRequest(parameters, httpRequest);
         GottabeClientDetailsService.ClientDetailsImpl clientDetails = (GottabeClientDetailsService.ClientDetailsImpl) clientDetailsService.loadClientByClientId(request.getClientId());
         if (clientDetails == null)
@@ -96,7 +96,7 @@ public class TokenController {
     }
 
     @PostMapping("revoke/{tokenId}")
-    public ResponseEntity<Void> authenticate(@PathVariable("tokenId") String tokenId, @RequestParam Map<String, String> parameters) throws IOException {
+    public ResponseEntity<Void> revokeToken(@PathVariable("tokenId") String tokenId, @RequestParam Map<String, String> parameters) throws IOException {
         tokenServices.revokeToken(tokenId);
         return ResponseEntity.ok().build();
     }
