@@ -1,10 +1,12 @@
 package io.gottabe.commons.mapper;
 
+import io.gottabe.commons.entities.BaseOwner;
 import io.gottabe.commons.entities.OrganizationUser;
 import io.gottabe.commons.entities.User;
 import io.gottabe.commons.entities.UserPrivacyOptions;
 import io.gottabe.commons.enums.IdHash;
 import io.gottabe.commons.vo.AnyUserVO;
+import io.gottabe.commons.vo.OwnerVO;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -22,6 +24,9 @@ public interface AnyUserMapper {
 
     @Mapping(source = "id", target = "id", qualifiedByName = "idToHash")
     AnyUserVO userToVo(User entity);
+
+    @Mapping(source = "id", target = "id", qualifiedByName = "idToHash")
+    OwnerVO ownerToVo(BaseOwner owner);
 
     @Named("idToHash")
     default String idToHash(Long id) {

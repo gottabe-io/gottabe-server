@@ -3,6 +3,7 @@ package io.gottabe.commons.services;
 import io.gottabe.commons.entities.BaseOwner;
 import io.gottabe.commons.entities.PackageData;
 import io.gottabe.commons.entities.PackageGroup;
+import io.gottabe.commons.enums.PackageType;
 import io.gottabe.commons.repositories.PackageDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,12 +36,12 @@ public class PackageDataService extends AbstractCrudService<PackageData, Long> {
         return getRepository().existsByGroupNameAndName(groupName, packageName);
     }
 
-    public PackageData getOrCreate(PackageGroup group, String packageName) {
-        return getRepository().findByGroupNameAndName(group.getName(), packageName).orElse(create(group, packageName));
+    public PackageData getOrCreate(PackageGroup group, String packageName, PackageType type) {
+        return getRepository().findByGroupNameAndName(group.getName(), packageName).orElseGet(() -> create(group, packageName, type));
     }
 
-    private PackageData create(PackageGroup group, String packageName) {
-        return save(PackageData.builder().group(group).name(packageName).build());
+    private PackageData create(PackageGroup group, String packageName, PackageType type) {
+        return save(PackageData.builder().group(group).name(packageName).type(type).build());
     }
 
     public Page<PackageData> findByOwner(BaseOwner owner, int page, int size) {

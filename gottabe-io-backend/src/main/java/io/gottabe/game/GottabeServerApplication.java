@@ -12,7 +12,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableConfigurationProperties(SiteConfig.class)
 @ComponentScan({"io.gottabe.game", "io.gottabe.commons"})
-@Import(CommonsConfig.class)
+@Import({CommonsConfig.class})
 @EnableSwagger2
 public class GottabeServerApplication {
 

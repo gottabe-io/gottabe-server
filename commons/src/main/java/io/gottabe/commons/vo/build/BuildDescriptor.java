@@ -19,11 +19,6 @@ public class BuildDescriptor extends BaseDescriptor {
     @NotNull
     @NotEmpty
     private String type;
-    private String description;
-    private String author;
-    private String sourceUrl;
-    private String issueUrl;
-    private String documentationUrl;
     private List<BuildDescriptor> modules;
     private List<PluginConfig> plugins;
     private List<String> dependencies;
@@ -33,5 +28,4 @@ public class BuildDescriptor extends BaseDescriptor {
     private List<TargetConfig> targets;
     @JsonProperty("package")
     private PackageConfig packageConfig;
-    private List<String> servers;
 }

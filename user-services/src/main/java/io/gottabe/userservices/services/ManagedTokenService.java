@@ -60,7 +60,7 @@ public class ManagedTokenService {
 
     public ManagedTokenVO createToken(User user) throws IOException {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), Set.of(new SimpleGrantedAuthority("cli")));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), Set.of(new SimpleGrantedAuthority("ROLE_CLI")));
         Oauth2TokenRequest request = Oauth2TokenRequest.builder()
                 .clientId(clientId)
                 .grantTypes(Set.of("cli"))

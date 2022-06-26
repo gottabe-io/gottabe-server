@@ -7,6 +7,7 @@ import io.gottabe.commons.mapper.PackageReleaseMapper;
 import io.gottabe.commons.repositories.PackageReleaseRepository;
 import io.gottabe.commons.vo.PackageReleaseVO;
 import io.gottabe.commons.vo.build.BuildDescriptor;
+import io.gottabe.commons.vo.build.PluginDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,18 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
                 .issuesUrl(build.getIssueUrl())
                 .sourceUrl(build.getSourceUrl())
                 .documentationUrl(build.getDocumentationUrl())
+                .build());
+    }
+
+    public PackageRelease createRelease(String version, PluginDescriptor plugin, PackageData packageData) {
+        return save(PackageRelease.builder()
+                .releaseDate(new Date())
+                .packageData(packageData)
+                .version(version)
+                .description(plugin.getDescription())
+                .issuesUrl(plugin.getIssueUrl())
+                .sourceUrl(plugin.getSourceUrl())
+                .documentationUrl(plugin.getDocumentationUrl())
                 .build());
     }
 

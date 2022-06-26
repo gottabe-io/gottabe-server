@@ -1,7 +1,7 @@
 import { LitElement, html, customElement, property, css } from 'lit-element';
 import {router, navigator} from './util/router';
-import {pubSubService} from './util/pupsub-services';
-import http from './services/http-service';
+import {pubSubService} from './services/pupsub-services';
+import {revokeToken} from './services/http-services';
 import './pages/login-form';
 import './pages/register';
 import './pages/activate';
@@ -13,10 +13,10 @@ import './pages/my-packages-page';
 import './pages/group-page';
 import './pages/package-page';
 import {Md5} from 'ts-md5/dist/md5';
-import { UserData, MenuItem } from './types';
-import * as userServices from './services/user-services';
+import { CurrentUserVO, MenuItem } from './types';
+import {userService, TOPIC_NAME, STORAGE_KEY} from './services/user-services';
 
-const TOPIC_NAME = 'gottabe.credentials';
+const TOPIC_NAME_C = 'gottabe.credentials';
 
 const DF_OPTIONS: any = {
     year: 'numeric', month: 'numeric', day: 'numeric',
@@ -32,7 +32,7 @@ const USER_MENU : MenuItem[] = [
 	{ label: 'Logout',        url: '/logout',   icon: ''}
 ];
 
-pubSubService.init(userServices.TOPIC_NAME, userServices.STORAGE_KEY);
+pubSubService.init(TOPIC_NAME, STORAGE_KEY);
 
 @customElement("gottabe-app")
 @router
@@ -233,7 +233,7 @@ class GottabeApp extends LitElement {
 		type: Object,
 		attribute: false
 	})
-	userData: UserData | undefined;
+	userData: CurrentUserVO | undefined;
 
 	@property({ type: String })
 	route: string;
@@ -325,15 +325,16 @@ class GottabeApp extends LitElement {
 	connectedCallback() {
 		super.connectedCallback();
 		const assignUser = ((user: any) => {
+			console.log(user);
 			this.userData = user;
-			pubSubService.publish(userServices.TOPIC_NAME, user);
+			pubSubService.publish(TOPIC_NAME, user);
 		}).bind(this);
-		pubSubService.subscribe(TOPIC_NAME, ((_msg: any, value: any) => {
+		pubSubService.subscribe(TOPIC_NAME_C, ((_msg: any, value: any) => {
 			if (!value.authToken) {
 				assignUser(undefined);
 			} else {
-				http.defaultHttpClient.get('/api/user/current', {})
-					.then(resp => resp.json().then(assignUser));
+				userService.currentUser()
+					.then(assignUser);
 			}
 		}).bind(this));
 	}
@@ -367,7 +368,7 @@ class GottabeApp extends LitElement {
 	}
 
 	_logout() {
-		http.revokeToken()
+		revokeToken()
 			 .catch(((e:any) => {
 			 	e.response.json().then(((v:any) => console.error(v)).bind(this));
 			 }).bind(this));

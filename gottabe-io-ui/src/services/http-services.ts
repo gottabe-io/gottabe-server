@@ -1,6 +1,6 @@
 import {builder, HttpClient, HttpHeaders} from 'igottp';
 import {OauthTokenService} from 'gottabe-client';
-import PubSub from 'pubsub-js';
+import {pubSubService} from './pupsub-services';
 import { Mutex } from '../util/mutex';
 
 const TOPIC_NAME = 'gottabe.credentials';
@@ -18,7 +18,13 @@ interface CredentialTypes {
 
 const credentials : CredentialTypes = JSON.parse(localStorage.getItem(LOCAL_STORE_KEY) || '{ "authToken": null, "refreshToken": null }');
 
-const saveCredentials = (creds : CredentialTypes) => localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(creds));
+pubSubService.init(TOPIC_NAME, LOCAL_STORE_KEY, { "authToken": null, "refreshToken": null });
+
+pubSubService.subscribe(TOPIC_NAME, (_topic: string, value?: any) => {
+    credentials.authToken = value.authToken;
+    credentials.refreshToken = value.refreshToken;
+});
+
 
 const headerSetter = (headers:any) => {
     if (credentials.authToken)
@@ -30,11 +36,15 @@ const responseHeaders = (_headers:any) => {
 };
 
 export const defaultClient: HttpClient = builder()
+    .withType('json')
+    .withAcceptType('json')
     .build();
 
 export const withAuthClient: HttpClient = builder()
         .withHeaderSetCallback(headerSetter)
         .withResponseHeadersCallback(responseHeaders)
+        .withType('json')
+        .withAcceptType('json')
         .build();
 
 const oauthTokenService = new OauthTokenService(defaultClient);
@@ -49,7 +59,8 @@ const requestAutoLogin = async(url:string, options:any) : Promise<Response> => {
         await refreshMutex.wait(2000);
         return await requestWithAuth(url, options);
     } catch (e: any) {
-        if (e.response.status == 401 || e.response.status == 403) {
+        console.log(e);
+        if (e.response && (e.response.status == 401 || e.response.status == 403)) {
             if (!refreshStatus.needUpdate) {
                 refreshStatus.needUpdate = true;
                 await refreshToken();
@@ -61,42 +72,41 @@ const requestAutoLogin = async(url:string, options:any) : Promise<Response> => {
 };
 
 export const autoLoginClient: HttpClient = builder()
+    .withType('json')
+    .withAcceptType('json')
     .build();
 
 autoLoginClient.request = requestAutoLogin;
 
 export const login = async(authData: any) => {
     let v = await oauthTokenService.authenticate(authData, API_ID, API_KEY);
-    PubSub.publishSync(TOPIC_NAME,{authToken:v.access_token, refreshToken: v.refresh_token});
+    pubSubService.publishSync(TOPIC_NAME,{authToken:v.access_token, refreshToken: v.refresh_token});
+    return v;
+};
+
+export const revokeToken = async() => {
+    let v = await oauthTokenService.revokeToken(credentials.authToken, {});
+    pubSubService.publishSync(TOPIC_NAME,{authToken:null, refreshToken: null});
     return v;
 };
 
 const refreshToken = async() => {
     if (!credentials.refreshToken) throw new Error("Cannot refresh token");
     refreshMutex.lock();
-    let authData : any = {
-        refresh_token: credentials.refreshToken,
-        grant_type: "refresh_token"
-    };
+    let authData = new FormData();
+    authData.append("refresh_token", credentials.refreshToken)
+    authData.append("grant_type", "refresh_token");
     try {
         let v: any = await oauthTokenService.authenticate(authData, API_ID, API_KEY);
-        PubSub.publishSync(TOPIC_NAME, {authToken: v.access_token, refreshToken: v.refresh_token});
+        pubSubService.publishSync(TOPIC_NAME, {authToken: v.access_token, refreshToken: v.refresh_token});
         refreshMutex.unlock();
         return v;
     } catch(e:any) {
         if (e.response.status >= 400 || e.response.status < 100) {
-            PubSub.publishSync(TOPIC_NAME,{authToken:null, refreshToken: null});
+            pubSubService.publishSync(TOPIC_NAME,{authToken:null, refreshToken: null});
         }
         refreshMutex.unlock();
         throw e;
     }
 };
 
-const initStates = () => {
-    PubSub.subscribe(TOPIC_NAME, (_msg:any, value:any) => {
-        Object.assign(credentials, value || {});
-        saveCredentials(credentials);
-    });
-};
-
-initStates();

@@ -25,4 +25,11 @@ public class BaseDescriptor {
     @NotNull
     @NotEmpty
     private String version;
+
+    private String license;
+    private String description;
+    private String author;
+    private String sourceUrl;
+    private String issueUrl;
+    private String documentationUrl;
 }

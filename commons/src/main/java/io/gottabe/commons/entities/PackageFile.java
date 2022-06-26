@@ -4,6 +4,8 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 @Entity
@@ -31,6 +33,7 @@ public class PackageFile extends AbstractEntity {
 
     private Long length;
 
-    private boolean uploaded;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date uploadDate;
 
 }

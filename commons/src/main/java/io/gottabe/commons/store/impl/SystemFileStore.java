@@ -48,9 +48,10 @@ public class SystemFileStore implements FileStore {
 
 	private void putFile(String objectName, InputStream data, File folder)
 			throws FileNotFoundException, IOException {
-		if (!folder.exists())
-			folder.mkdirs();
 		File file = new File(folder, objectName);
+		File parent = file.getParentFile();
+		if (!parent.exists())
+			parent.mkdirs();
 		FileOutputStream os = new FileOutputStream(file);
 		data.transferTo(os);
 		os.flush();

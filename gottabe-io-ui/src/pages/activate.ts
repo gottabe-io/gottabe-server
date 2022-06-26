@@ -1,5 +1,5 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import userService from '../services/user-services';
+import {userService} from '../services/user-services';
 import {style} from '../styles';
 
 @customElement("activate-form")
@@ -72,7 +72,7 @@ class ActivationForm extends LitElement {
 	handleResend(e:any) {
 		e.preventDefault();
 		if (this.email)
-		userService.resendActivation(this.email)
+		userService.resendActivationCode(this.email)
 			.then(((_v:any) => {
 				this.error = 'A new code was sent.';
 			}).bind(this))

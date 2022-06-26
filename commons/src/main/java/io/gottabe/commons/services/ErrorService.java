@@ -1,5 +1,6 @@
 package io.gottabe.commons.services;
 
+import io.gottabe.commons.exceptions.ResourceNotFoundException;
 import io.gottabe.commons.vo.ErrorFieldVO;
 import io.gottabe.commons.vo.ErrorVO;
 import lombok.extern.java.Log;
@@ -55,6 +56,17 @@ public class ErrorService {
     @ResponseBody
     public ErrorVO handleAuthenticationException(
             AuthenticationException ex) {
+        if (debug) log.error("Error captured: ", ex);
+        ErrorVO errors = new ErrorVO();
+        errors.setMessage(ex.getMessage());
+        return errors;
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseBody
+    public ErrorVO handleNotFoundExceptions(
+            Exception ex) {
         if (debug) log.error("Error captured: ", ex);
         ErrorVO errors = new ErrorVO();
         errors.setMessage(ex.getMessage());

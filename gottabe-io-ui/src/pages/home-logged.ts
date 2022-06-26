@@ -1,5 +1,5 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
-import {UserData} from "../types";
+import {UserVO} from "../types";
 
 @customElement("home-logged")
 class HomeLogged extends LitElement {
@@ -38,7 +38,7 @@ class HomeLogged extends LitElement {
 		type: Object,
 		attribute: false
 	})
-	userData: UserData | undefined;
+	userData: UserVO | undefined;
 
 	render() {
 		return html`

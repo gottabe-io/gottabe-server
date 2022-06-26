@@ -1,6 +1,6 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { navigator } from 'lit-element-router';
-import http from '../services/http-service';
+import {login} from '../services/http-services';
 import {style} from '../styles';
 
 @customElement("login-form")
@@ -16,9 +16,6 @@ class LoginForm extends LitElement {
 
 	@property()
 	newUser : boolean;
-
-	@property()
-	user ?: any;
 
 	render() {
 		return html`
@@ -56,16 +53,19 @@ class LoginForm extends LitElement {
 		e.preventDefault();
 		let formEl = this.shadowRoot?this.shadowRoot.getElementById('loginForm'):null;
 		if (!formEl) return;
-		let form = new FormData(<HTMLFormElement>formEl);
-		http.login(form)
+		let formData = new FormData(<HTMLFormElement>formEl);
+		login(formData)
 			.then((_res: any) => {
 				(<any>this).navigate("/");
 			})
 			.catch(((e:any) => {
+				if (e.response)
 				e.response.json().then(((v:any) => {
 					this.error = v.error_description;
 					console.log(v);
 				}).bind(this));
+				else
+					console.error(e);
 			}).bind(this));
 	}
 
