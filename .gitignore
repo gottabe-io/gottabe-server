@@ -11,4 +11,5 @@ node_modules
 /gottabe-io-ui/dist
 /gottabe-io-ui/js
 /gottabe-io-ui/.parcel-cache
+/gottabe-io-ui/package-lock.json
 *.iml

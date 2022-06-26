@@ -1,0 +1,76 @@
+{
+  "groupId": "com.anlohse.utils",
+  "artifactId": "utils_cpp",
+  "version": "1.0.0",
+  "type": "shared library",
+  "description": "A simple example of dll",
+  "author": "Alan N. Lohse",
+  "sourceUrl": null,
+  "issueUrl": null,
+  "documentationUrl": null,
+  "license": "GPL-3",
+  "modules": null,
+  "plugins": null,
+  "dependencies": [
+    "com.anlohse.utils/utils_base@1.0.0"
+  ],
+  "includeDirs": [],
+  "sources": [
+    "./src/*.cpp"
+  ],
+  "testSources": [
+    "./test_src/*.cpp"
+  ],
+  "targets": [
+    {
+      "name": "Debug",
+      "arch": "x64",
+      "platform": "win32",
+      "toolchain": "msvc14",
+      "plugins": null,
+      "includeDirs": [],
+      "sources": [],
+      "options": {
+        "optimization": 0,
+        "debug": 3,
+        "warnings": "all",
+        "other": ""
+      },
+      "defines": {
+        "DEBUG": "",
+        "BUILDING_EXAMPLE_DLL": ""
+      },
+      "libraryPaths": [],
+      "libraries": [],
+      "linkOptions": null
+    },
+    {
+      "name": "Release",
+      "arch": "x64",
+      "platform": "win32",
+      "toolchain": "gcc",
+      "plugins": null,
+      "includeDirs": [],
+      "sources": [],
+      "options": {
+        "optimization": 3,
+        "debug": 0,
+        "warnings": "all",
+        "other": ""
+      },
+      "defines": {
+        "BUILDING_EXAMPLE_DLL": ""
+      },
+      "libraryPaths": [],
+      "libraries": [],
+      "linkOptions": null
+    }
+  ],
+  "package": {
+    "name": "dllsample",
+    "includes": [
+      "./src/*.h"
+    ],
+    "other": []
+  }
+}

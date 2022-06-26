@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -89,7 +90,7 @@ public class UserService extends AbstractCrudService<User, Long> {
 
     public User currentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.isAuthenticated()) {
+        if (auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             return getRepository().findByEmail(auth.getName())
                     .orElseThrow(ResourceNotFoundException::new);
         }
@@ -98,6 +99,9 @@ public class UserService extends AbstractCrudService<User, Long> {
 
     public void createNew(UserVO userVo) throws Exception {
         User user = UserMapper.INSTANCE.voToUser(userVo);
+        if (!StringUtils.hasText(userVo.getPassword())
+                || !hasMinimumRequirements(userVo.getPassword()))
+            throw new InvalidRequestException("user.password.requirements");
         if (!Objects.equals(userVo.getPassword(), userVo.getConfirmPassword()))
             throw new InvalidRequestException("user.password.dont_match");
         user.setPassword(passwordEncoder2.encode(userVo.getPassword()));
@@ -112,6 +116,21 @@ public class UserService extends AbstractCrudService<User, Long> {
         if (!autoActivateUser) {
             emailService.sendMailUser(UserMapper.INSTANCE.userToVO(user), messages.getString("user.activation.subject"), "activation");
         }
+    }
+
+    private boolean hasMinimumRequirements(String password) {
+        boolean hasUppercase = false;
+        boolean hasLowercase = false;
+        boolean hasNumber = false;
+        boolean hasSpecial = false;
+        for (int i = 0; i < password.length(); i++) {
+            char ch = password.charAt(i);
+            hasUppercase = hasUppercase || Character.isUpperCase(ch);
+            hasLowercase = hasLowercase || Character.isLowerCase(ch);
+            hasNumber = hasNumber || Character.isDigit(ch);
+            hasSpecial = hasSpecial || (!Character.isAlphabetic(ch) && !Character.isDigit(ch));
+        }
+        return hasUppercase && hasLowercase && hasNumber && hasSpecial && password.length() >= 8;
     }
 
     private void generateActivationCode(User user) {

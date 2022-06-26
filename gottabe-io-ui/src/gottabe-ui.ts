@@ -1,7 +1,7 @@
 import { LitElement, html, customElement, property, css } from 'lit-element';
 import {router, navigator} from './util/router';
-import {pubSubService} from './util/pupsub-services';
-import http from './services/http-service';
+import {pubSubService} from './services/pupsub-services';
+import {revokeToken} from './services/http-services';
 import './pages/login-form';
 import './pages/register';
 import './pages/activate';
@@ -12,11 +12,12 @@ import './pages/tokens-page';
 import './pages/my-packages-page';
 import './pages/group-page';
 import './pages/package-page';
+import './pages/reviews-page';
 import {Md5} from 'ts-md5/dist/md5';
-import { UserData, MenuItem } from './types';
-import * as userServices from './services/user-services';
+import { CurrentUserVO, MenuItem } from './types';
+import {userService, TOPIC_NAME, STORAGE_KEY} from './services/user-services';
 
-const TOPIC_NAME = 'gottabe.credentials';
+const TOPIC_NAME_C = 'gottabe.credentials';
 
 const DF_OPTIONS: any = {
     year: 'numeric', month: 'numeric', day: 'numeric',
@@ -32,7 +33,7 @@ const USER_MENU : MenuItem[] = [
 	{ label: 'Logout',        url: '/logout',   icon: ''}
 ];
 
-pubSubService.init(userServices.TOPIC_NAME, userServices.STORAGE_KEY);
+pubSubService.init(TOPIC_NAME, STORAGE_KEY);
 
 @customElement("gottabe-app")
 @router
@@ -73,6 +74,12 @@ class GottabeApp extends LitElement {
 		}, {
 			name: 'package',
 			pattern: 'packages/:groupName/:packageName'
+		}, {
+			name: 'search',
+			pattern: 'search/:query'
+		}, {
+			name: 'reviews',
+			pattern: 'reviews/:groupName/:packageName/:version'
 		}, {
 			name: 'not-found',
 			pattern: '*'
@@ -233,7 +240,7 @@ class GottabeApp extends LitElement {
 		type: Object,
 		attribute: false
 	})
-	userData: UserData | undefined;
+	userData: CurrentUserVO | undefined;
 
 	@property({ type: String })
 	route: string;
@@ -263,7 +270,7 @@ class GottabeApp extends LitElement {
 						</h2>
 						<form>
 							<input type="text" placeholder="Search" class="search-input"/>
-							<input type="submit" value="Search" class="search-button"/>
+							<input type="submit" value="Search" class="search-button" @click="${this._handleSearch}"/>
 						</form>
 						${this.getUserBar()} 
 					</nav>
@@ -278,7 +285,9 @@ class GottabeApp extends LitElement {
 					'my-packages' : html`<my-packages-page code="${this.userData}"></my-packages-page>`,
 					'packages' : html`<group-page groupName="${this.params.groupName}"></group-page>`,
 					'package' : html`<package-page groupName="${this.params.groupName}" packageName="${this.params.packageName}"></package-page>`,
-                    'tokens' : html`<tokens-page code="${this.userData}"></tokens-page>`,
+					'reviews' : html`<reviews-page groupName="${this.params.groupName}" packageName="${this.params.packageName}" version="${this.params.version}"></reviews-page>`,
+					'search' : html`<search-page query="${this.params.query}"></search-page>`,
+					'tokens' : html`<tokens-page code="${this.userData}"></tokens-page>`,
 					'logout' : (() => this._logout()).bind(this)
 					}, html`<h1>Not found</h1>`)
                 }
@@ -326,19 +335,19 @@ class GottabeApp extends LitElement {
 		super.connectedCallback();
 		const assignUser = ((user: any) => {
 			this.userData = user;
-			pubSubService.publish(userServices.TOPIC_NAME, user);
+			pubSubService.publish(TOPIC_NAME, user);
 		}).bind(this);
-		pubSubService.subscribe(TOPIC_NAME, ((_msg: any, value: any) => {
+		pubSubService.subscribe(TOPIC_NAME_C, ((_msg: any, value: any) => {
 			if (!value.authToken) {
 				assignUser(undefined);
 			} else {
-				http.defaultHttpClient.get('/api/user/current', {})
-					.then(resp => resp.json().then(assignUser));
+				userService.currentUser()
+					.then(assignUser);
 			}
 		}).bind(this));
 	}
 
-	handleMenuItem(e: MouseEvent) {
+	private handleMenuItem(e: MouseEvent) {
 		let href = (<any>e.target || <any>e.currentTarget || {}).attributes['href'].value;
 		this._hideMenu();
 		e.preventDefault();
@@ -348,7 +357,7 @@ class GottabeApp extends LitElement {
 			(<any>this).navigate(href);
 	}
 
-	_showMenu() {
+	private _showMenu() {
 		if (this.shadowRoot) {
 			let target = this.shadowRoot.querySelector('.menu');
 			if (target) target.classList.toggle('showMenu');
@@ -357,7 +366,7 @@ class GottabeApp extends LitElement {
 		}
 	}
 
-	_hideMenu() {
+	private _hideMenu() {
 		if (this.shadowRoot) {
 			let target = this.shadowRoot.querySelector('.menu');
 			if (target) target.classList.remove('showMenu');
@@ -366,12 +375,20 @@ class GottabeApp extends LitElement {
 		}
 	}
 
-	_logout() {
-		http.revokeToken()
+	private _logout() {
+		revokeToken()
 			 .catch(((e:any) => {
 			 	e.response.json().then(((v:any) => console.error(v)).bind(this));
 			 }).bind(this));
 		// this.userData = undefined;
+	}
+
+	private async _handleSearch(e: Event) {
+		e.preventDefault();
+		let query = this.shadowRoot && (<HTMLInputElement>this.shadowRoot.querySelector('input.search-input')).value;
+		if (query && query.length > 1) {
+			(<any>this).navigate('/search/' + query);
+		}
 	}
 
 }

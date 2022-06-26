@@ -1,6 +1,6 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
-import {UserPrivacy, UserProfile} from "../types";
-import userService from '../services/user-services';
+import {UserPrivacyVO, UserVO} from "../types";
+import {userService} from '../services/user-services';
 import {style} from '../styles';
 import {Timer} from '../util/mutex';
 
@@ -49,9 +49,9 @@ class ProfilePage extends LitElement {
 	}
 
 	@property({ type: Object })
-	private profile: UserProfile;
+	private profile: UserVO;
 	@property({ type: Object })
-	private privacy: UserPrivacy;
+	private privacy: UserPrivacyVO;
 	@property()
 	error ?: string;
 	@property()
@@ -131,8 +131,8 @@ class ProfilePage extends LitElement {
 
 	constructor() {
 		super();
-		this.profile = {};
-		this.privacy = {};
+		this.profile = <any>{};
+		this.privacy = <any>{};
 		this.timer = new Timer();
 	}
 
@@ -146,8 +146,8 @@ class ProfilePage extends LitElement {
 
 	private async _updateData() {
 		this.error = '';
-		this.profile = await userService.profile();
-		this.privacy = await userService.privacy();
+		this.profile = await userService.currentUserProfile();
+		this.privacy = await userService.currentUserPrivacy();
 	}
 
 	handleChangeData(event: any) {
@@ -167,17 +167,13 @@ class ProfilePage extends LitElement {
 	triggerUpdateData() {
 		this.timer.cancel();
 		this.timer.start(3000)
-			.then((() => {
-				userService.profile(this.profile);
-			}).bind(this));
+			.then((() => userService.updateCurrentUserProfile(this.profile)).bind(this));
 	}
 
 	triggerUpdatePrivacy() {
 		this.timer.cancel();
 		this.timer.start(3000)
-			.then((() => {
-				userService.privacy(this.privacy);
-			}).bind(this));
+			.then((() => userService.updateCurrentUserPrivacy(this.privacy)).bind(this));
 	}
 
 }

@@ -1,7 +1,7 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
-import {ManagedToken} from "../types";
+import {ManagedTokenVO} from "../types";
 import {style} from '../styles';
-import userService from "../services/user-services";
+import {userService} from "../services/user-services";
 
 @customElement("tokens-page")
 class TokensPage extends LitElement {
@@ -41,7 +41,7 @@ class TokensPage extends LitElement {
     }
 
     @property()
-    tokens: Array<ManagedToken>;
+    tokens: Array<ManagedTokenVO>;
 
     private error?: string;
 
@@ -70,7 +70,7 @@ class TokensPage extends LitElement {
         this._updateData().catch(((e:any) => this.error = e.message).bind(this));
     }
 
-    private _token(token: ManagedToken, i: number) {
+    private _token(token: ManagedTokenVO, i: number) {
         if (!token) return html``;
         const clickRevoke = (_event: MouseEvent) => {
             this._revokeToken(this.tokens[i]);
@@ -78,19 +78,21 @@ class TokensPage extends LitElement {
         return html`
             <tr>
                 <td>${token.token}</td>
-                <td>${new Date(Date.parse(token.creationDate)).toLocaleString()}</td>
+                <td>${token.creationDate ? new Date(Date.parse(token.creationDate)).toLocaleString() : ''}</td>
                 <td class="actions"><a href="#delete" @click="${clickRevoke.bind(this)}">Revoke</a></td>
             </tr>
         `;
     }
 
-    private async _revokeToken(token: ManagedToken) {
-        await userService.revokeToken(token.token);
+    private async _revokeToken(token: ManagedTokenVO) {
+        if (token.token) {
+            await userService.removeToken(token.token);
+        }
         await this._updateData();
     }
 
     private async _updateData() {
-        this.tokens = await userService.tokens();
+        this.tokens = await userService.listTokens();
         await this.performUpdate();
     }
 

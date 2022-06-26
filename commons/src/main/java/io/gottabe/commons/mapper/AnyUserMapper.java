@@ -1,10 +1,12 @@
 package io.gottabe.commons.mapper;
 
+import io.gottabe.commons.entities.BaseOwner;
 import io.gottabe.commons.entities.OrganizationUser;
 import io.gottabe.commons.entities.User;
 import io.gottabe.commons.entities.UserPrivacyOptions;
 import io.gottabe.commons.enums.IdHash;
 import io.gottabe.commons.vo.AnyUserVO;
+import io.gottabe.commons.vo.OwnerVO;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,6 +25,9 @@ public interface AnyUserMapper {
     @Mapping(source = "id", target = "id", qualifiedByName = "idToHash")
     AnyUserVO userToVo(User entity);
 
+    @Mapping(source = "id", target = "id", qualifiedByName = "idToHash")
+    OwnerVO ownerToVo(BaseOwner owner);
+
     @Named("idToHash")
     default String idToHash(Long id) {
         return IdHash.USER.hash(id);
@@ -31,12 +36,14 @@ public interface AnyUserMapper {
     default AnyUserVO userToVoPrivacy(User entity) {
         AnyUserVO vo = userToVo(entity);
         UserPrivacyOptions privacyOptions = entity.getPrivacyOptions();
-        if (!privacyOptions.isShowEmail()) vo.setEmail(null);
-        if (!privacyOptions.isShowGithub()) vo.setGithubAccount(null);
-        if (!privacyOptions.isShowTwitter()) vo.setTwitterAccount(null);
-        if (!privacyOptions.isShowName()) {
-            vo.setName(null);
-            vo.setLastName(null);
+        if (privacyOptions != null) {
+            if (!privacyOptions.isShowEmail()) vo.setEmail(null);
+            if (!privacyOptions.isShowGithub()) vo.setGithubAccount(null);
+            if (!privacyOptions.isShowTwitter()) vo.setTwitterAccount(null);
+            if (!privacyOptions.isShowName()) {
+                vo.setName(null);
+                vo.setLastName(null);
+            }
         }
         return vo;
     }

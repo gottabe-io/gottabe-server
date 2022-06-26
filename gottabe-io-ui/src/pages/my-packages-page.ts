@@ -1,23 +1,12 @@
-import {LitElement, html, customElement, css, property} from 'lit-element';
-import {PackageData, PackageGroup, UserData} from "../types";
+import {css, customElement, html, LitElement, property} from 'lit-element';
+import {PackageDataVO, PackageGroupVO, UserVO} from "../types";
 import {style} from '../styles';
-import packageService from "../services/package-services";
+import {packageService} from "../services/package-services";
 import '../components/my-dialog';
 import {MyDialogElement} from "../components/my-dialog";
-import {pubSubService, TopicCallbackFunction} from '../util/pupsub-services';
-import * as userServices from "../services/user-services";
-
-function setValue(base:any, path:string, value:any) {
-    let ids = path.split(".");
-    let last = '';
-    ids.forEach((id:string,i:number) => {
-        if (i < ids.length - 1)
-            base = base[id];
-        else
-            last = id;
-    });
-    base[last] = value;
-}
+import {pubSubService, TopicCallbackFunction} from '../services/pupsub-services';
+import {TOPIC_NAME} from "../services/user-services";
+import {setValue} from "../util/utils";
 
 @customElement("my-packages-page")
 class MyPackagesPage extends LitElement {
@@ -63,17 +52,17 @@ class MyPackagesPage extends LitElement {
     }
 
     @property()
-    packages: Array<PackageData>;
+    packages: Array<PackageDataVO>;
 
     private error?: string;
 
-    private group: PackageGroup;
+    private group: PackageGroupVO;
 
     private errorFields: any;
 
-    private __package: PackageData;
+    private __package: PackageDataVO;
 
-    private userData?: UserData;
+    private userData?: UserVO;
 
     private userCallback: TopicCallbackFunction;
 
@@ -123,7 +112,7 @@ class MyPackagesPage extends LitElement {
                         <span class="error">
                             <h3>${this.errorFields['group.name']}</h3>
                         </span>
-                        <input type="text" name="__package.group.name" .value="${this.__package.group.name}" @change="${this._handleChange}"/>
+                        <input type="text" name="__package.group.name" .value="${this.__package?.group?.name}" @change="${this._handleChange}"/>
                     </div>
                     <div class="form-field">
                         <label>Name:</label>
@@ -142,7 +131,7 @@ class MyPackagesPage extends LitElement {
         this.packages = [];
         this.errorFields = {};
         this.group = {name:'', description:''};
-        this.__package = {name:'', group:{name:''}};
+        this.__package = {name:'', group:{name:''}, type: 'PACKAGE'};
         this.userCallback = ((_topic:string, value:any) => {
             this.userData = value;
             this.performUpdate();
@@ -151,8 +140,8 @@ class MyPackagesPage extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        pubSubService.subscribe(userServices.TOPIC_NAME, this.userCallback);
-        this._updateData().catch(((e:any) => this.error = e.message).bind(this));
+        pubSubService.subscribe(TOPIC_NAME, this.userCallback);
+        this._updateData().catch(((e:any) => {this.error = e.message; console.error(e)}).bind(this));
     }
 
     disconnectedCallback() {
@@ -160,18 +149,15 @@ class MyPackagesPage extends LitElement {
         pubSubService.unsubscribe(this.userCallback);
     }
 
-    private _package(pack: PackageData, i: number) {
+    private _package(pack: PackageDataVO, _i: number) {
         if (!pack) return html``;
-        const clickOpen = (_event: MouseEvent) => {
-            console.log(this.packages[i]);
-        };
         return html`
             <tr>
-                <td rowspan="${pack.releases?.length}">${pack.group?.name}/${pack.name}</td>
+                <td rowspan="${Math.max(1,pack.releases?.length || 0)}">${pack.group?.name}/${pack.name}</td>
                 ${pack.releases?.map((release,j) => html`
                     <td>${release.version}</td>
-                    <td>${new Date(Date.parse(release.releaseDate)).toLocaleString()}</td>
-                    <td class="actions"><a href="#open" @click="${clickOpen.bind(this)}">Open</a></td>
+                    <td>${release.releaseDate ? new Date(Date.parse(release.releaseDate)).toLocaleString() : ''}</td>
+                    <td class="actions"><a href="/packages/${pack.group?.name}/${pack.name}">Open</a></td>
                     ${j < (pack.releases?.length||0) - 1 ? html`</tr><tr>`: ''}`
                 )}
                 ${!(pack.releases?.length) ? html`<td colspan="3" style="text-align: center">No release done yet!</td>` : '' }
@@ -180,17 +166,18 @@ class MyPackagesPage extends LitElement {
     }
 
     private async _updateData() {
-        this.packages = await packageService.mine();
+        this.packages = await packageService.myPackages();
         await this.performUpdate();
     }
 
     private async _createPackage() {
         let packageDlg = <MyDialogElement>this.shadowRoot?.querySelector('my-dialog#packageDlg')
-        this.__package = {name:'', group:{name:''}};
+        this.__package = {name:'', group:{name:''}, type: 'PACKAGE'};
         let result = await packageDlg?.show(true);
         if (result == 'ok') {
-            console.log(this.__package);
-            await packageService.createPackage(this.__package);
+            if (this.__package?.group?.name) {
+                await packageService.createPackage(this.__package?.group?.name, this.__package);
+            }
             await this._updateData();
         }
     }

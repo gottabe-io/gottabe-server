@@ -1,8 +1,16 @@
 
-export const formatDate = (date?: string | number | Date) => {
+export const formatDatetime = (date?: string | number | Date) => {
     if (date) {
         let _date = typeof date == 'string' ? Date.parse(date) : date;
         return (_date instanceof Date ? _date : new Date(_date)).toLocaleString();
+    }
+    return '';
+};
+
+export const formatDate = (date?: string | number | Date) => {
+    if (date) {
+        let _date = typeof date == 'string' ? Date.parse(date) : date;
+        return (_date instanceof Date ? _date : new Date(_date)).toLocaleDateString();
     }
     return '';
 };
@@ -28,3 +36,14 @@ export const formatDateAgo = (date?: string | number | Date) => {
     return '';
 };
 
+export function setValue(base: any, path: string, value: any) {
+    let ids = path.split(".");
+    let last = '';
+    ids.forEach((id: string, i: number) => {
+        if (i < ids.length - 1)
+            base = base[id];
+        else
+            last = id;
+    });
+    base[last] = value;
+}

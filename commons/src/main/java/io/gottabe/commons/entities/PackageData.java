@@ -1,5 +1,6 @@
 package io.gottabe.commons.entities;
 
+import io.gottabe.commons.enums.PackageType;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,6 +22,10 @@ public class PackageData extends AbstractEntity {
 
     @Column(length = 100, nullable = false)
     private String name;
+
+    private PackageType type;
+
+    private boolean isPublic;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude

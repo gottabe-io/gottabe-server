@@ -5,7 +5,7 @@ export type TopicCallbackFunction = PubSubJS.SubscriptionListener<any>;
 const storageKeys: any = {};
 
 class PubSubService {
-    init(topic: string, localStorageKey: string) {
+    init(topic: string, localStorageKey: string, defaultValue?:any) {
         storageKeys[topic] = localStorageKey;
         const callbackCaller = (_topic: string, value: any) => {
             if (typeof value != 'undefined')
@@ -13,6 +13,9 @@ class PubSubService {
             else
                 window.localStorage.removeItem(localStorageKey);
         };
+        if (defaultValue && !window.localStorage.getItem(localStorageKey)) {
+            callbackCaller(topic, defaultValue);
+        }
         PubSub.subscribe(topic, callbackCaller);
     }
     subscribe(topic: string, callback: TopicCallbackFunction): string {

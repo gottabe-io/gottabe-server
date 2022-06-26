@@ -1,5 +1,5 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import userService from '../services/user-services';
+import {userService} from '../services/user-services';
 import {style} from '../styles';
 
 @customElement("register-form")
@@ -116,7 +116,7 @@ class RegisterForm extends LitElement {
 
 	handleRegister(e:any) {
 		e.preventDefault();
-		userService.create(this.user, {})
+		userService.createNew(this.user)
 			.then(((_v:any) => {
 				this.error = 'An activation meil was sent.';
 				this.user = this._newUser();

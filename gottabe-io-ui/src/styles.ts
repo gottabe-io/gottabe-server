@@ -14,7 +14,7 @@ export const style = css`
 	div.container div {
 		margin-top: 8px;
 	}
-	label, input:not([type='checkbox']):not([type='radio']), button {
+	label, input:not([type='checkbox']):not([type='radio']), button, textarea {
 		display: block;
 	}
 	label {
@@ -24,12 +24,16 @@ export const style = css`
     textarea:focus, input:focus{
         outline: none;
     }
-    input:not([type='checkbox']):not([type='radio']), button {
+    input:not([type='checkbox']):not([type='radio']), button, textarea {
 		padding: 4px;
 		width: calc(100% - 8px);
 		border: 1px solid #777;
 		border-radius: 4px;
 	}
+    label.checkbox, label.radio {
+        padding-top: 3px;
+        padding-bottom: 2px;
+    } 
 	button {
 		width: 100%;
 		font-weight: bold;
@@ -60,4 +64,18 @@ export const style = css`
 	.error h3 {
 		margin: 0px;
 	}
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .col-2 {
+        width: calc(50% - 8px);
+        margin-left: 0px;
+        margin-right: 8px;
+    }
+    .col-2-end {
+        width: 50%;
+        margin-left: 0px;
+        margin-right: 0px;
+    }
 `;

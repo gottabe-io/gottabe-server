@@ -1,7 +1,7 @@
 import {LitElement, html, customElement, css, property} from 'lit-element';
 import {style} from '../styles';
-import packageService from "../services/package-services";
-import {PackageData} from "../types";
+import {packageService} from "../services/package-services";
+import {PackageDataVO} from "../types";
 
 @customElement("group-page")
 class GroupPage extends LitElement {
@@ -52,7 +52,7 @@ class GroupPage extends LitElement {
     @property({attribute: true})
     groupName?: string;
 
-    private packages: PackageData[];
+    private packages: PackageDataVO[];
 
     render() {
         return html`
@@ -86,11 +86,12 @@ class GroupPage extends LitElement {
     }
 
     private async _updateData() {
-        this.packages = await packageService.group(this.groupName, {fetch: 'LATEST_RELEASE'});
+        if (this.groupName)
+            this.packages = await packageService.groupPackages(this.groupName,undefined, 'LATEST_RELEASE');
         await this.performUpdate();
     }
 
-    private _package(pack: PackageData, _i: number) {
+    private _package(pack: PackageDataVO, _i: number) {
         if (!pack) return html``;
         return html`
             <tr>
