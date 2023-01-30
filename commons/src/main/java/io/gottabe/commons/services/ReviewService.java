@@ -38,13 +38,13 @@ public class ReviewService extends AbstractCrudService<PackageReleaseReview, Lon
     }
 
     public Page<PackageReleaseReview> findRevisions(String groupName, String packageName, String version, int page, int size) {
-        PackageRelease release = packageReleaseRepository.findOneByPackageDataGroupNameAndPackageDataNameAndVersion(groupName, packageName, version).orElseThrow(ResourceNotFoundException::new);
+        PackageRelease release = packageReleaseRepository.findByLatestPackageVersion(groupName, packageName, version, PageRequest.of(0,1)).stream().findFirst().orElseThrow(ResourceNotFoundException::new);
         return getRepository().findByRelease(release, PageRequest.of(page, size, Sort.by(Sort.Order.desc("reviewLikes"))));
     }
 
     public PackageReleaseReview createReview(String groupName, String packageName, String version, NewReviewVO reviewVo) {
         User user = userService.currentUser();
-        PackageRelease release = packageReleaseRepository.findOneByPackageDataGroupNameAndPackageDataNameAndVersion(groupName, packageName, version).orElseThrow(ResourceNotFoundException::new);
+        PackageRelease release = packageReleaseRepository.findByLatestPackageVersion(groupName, packageName, version, PageRequest.of(0,1)).stream().findFirst().orElseThrow(ResourceNotFoundException::new);
         BaseOwner owner = release.getPackageData().getGroup().getOwner();
         if (owner instanceof User) {
             if (user.equals(owner))

@@ -11,6 +11,7 @@ import io.gottabe.commons.vo.PackageReleaseVO;
 import io.gottabe.commons.vo.build.BuildDescriptor;
 import io.gottabe.commons.vo.build.PluginDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -32,13 +33,18 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
     }
 
     public PackageReleaseVO findByGroupAndNameAndVersionVO(String groupName, String packageName, String version, PackageType type) {
-        return getRepository().findByPackageDataGroupNameAndPackageDataNameAndVersionAndPackageDataType(groupName, packageName, version, type)
+        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), type, PageRequest.of(0,1))
+                .stream().findFirst()
                 .map(PackageReleaseMapper.INSTANCE::releaseToVO)
                 .orElseThrow(ResourceNotFoundException::new);
     }
 
+    private String wildCardVersion(String version) {
+        return version.replaceAll("[*+]", "%");
+    }
+
     public Optional<PackageRelease> findByGroupAndNameAndVersion(String groupName, String packageName, String version, PackageType type) {
-        return getRepository().findByPackageDataGroupNameAndPackageDataNameAndVersionAndPackageDataType(groupName, packageName, version, type);
+        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), type, PageRequest.of(0,1)).stream().findFirst();
     }
 
     public PackageRelease createRelease(String version, BuildDescriptor build, PackageData packageData) {
