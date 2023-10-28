@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface PackageReleaseRepository extends CrudRepository<PackageRelease, Long> {
@@ -18,9 +19,9 @@ public interface PackageReleaseRepository extends CrudRepository<PackageRelease,
             "where pr.packageData.group.name = :groupName " +
             "  and pr.packageData.name = :packageName " +
             "  and pr.version like :version " +
-            "  and pr.packageData.type = :type " +
+            "  and pr.packageData.type in (:types) " +
             " order by pr.version desc")
-    List<PackageRelease> findByLatestPackageVersionWithType(String groupName, String packageName, String version, PackageType type, Pageable pageable);
+    List<PackageRelease> findByLatestPackageVersionWithType(String groupName, String packageName, String version, Set<PackageType> types, Pageable pageable);
 
     Optional<PackageRelease> findOneByPackageDataOrderByReleaseDateDesc(PackageData pack);
 

@@ -10,15 +10,16 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface PackageDataRepository extends CrudRepository<PackageData, Long> {
 
     Page<PackageData> findByGroupNameLikeAndType(String groupName, PackageType type, Pageable page);
 
-    Optional<PackageData> findByGroupNameAndNameAndType(String groupName, String name, PackageType type);
+    Optional<PackageData> findByGroupNameAndNameAndTypeIn(String groupName, String name, Set<PackageType> types);
 
-    Page<PackageData> findByGroupOwnerAndType(BaseOwner owner, PackageType type, Pageable page);
+    Page<PackageData> findByGroupOwnerAndTypeInAndIsPublicIn(BaseOwner owner, Set<PackageType> types, Set<Boolean> visibility, Pageable page);
 
     boolean existsByGroupNameAndName(String groupName, String packageName);
 

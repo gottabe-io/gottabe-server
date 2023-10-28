@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -66,10 +67,39 @@ public class PackageController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("mine")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<PackageDataVO>> myPackages(@RequestParam(value = "type", defaultValue = "PACKAGE") PackageType type,
+    public ResponseEntity<List<PackageDataVO>> myPackages(@RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types,
                                                           @RequestParam(value = "page", required = false) Integer page,
                                                           @RequestParam(value = "size", required = false) Integer size) {
-        Page<PackageData> pages = packageDataService.findByOwnerAndType(userService.currentUser(), type,
+        Page<PackageData> pages = packageDataService.findByOwnerAndTypes(userService.currentUser(), types, Set.of(Boolean.FALSE, Boolean.TRUE),
+                page != null ? page : 0, size != null ? size : 25);
+        List<PackageDataVO> packages = pages.stream()
+                .map(PackageDataMapper.INSTANCE::packageToVOWithReleases)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok()
+                .header("RESULT_COUNT", String.valueOf(pages.getTotalElements()))
+                .body(packages);
+    }
+
+    @GetMapping("from")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PackageDataVO>> packagesFrom(@RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types,
+                                                            @RequestParam(value = "owner") String nickname,
+                                                            @RequestParam(value = "page", required = false) Integer page,
+                                                            @RequestParam(value = "size", required = false) Integer size) {
+        BaseOwner owner = userService.findOwnerByNickname(nickname);
+        User currentUser = userService.currentUser();
+        Set<Boolean> visibility = Set.of(Boolean.FALSE);
+        if (owner instanceof Organization) {
+            Organization org = (Organization) owner;
+            if (org.getUsers().stream().anyMatch(orgUser -> orgUser.getUser().equals(currentUser))) {
+                visibility.add(Boolean.TRUE);
+            }
+        } else {
+            User user = (User) owner;
+            if (user.equals(currentUser))
+                visibility.add(Boolean.TRUE);
+        }
+        Page<PackageData> pages = packageDataService.findByOwnerAndTypes(owner, types, visibility,
                 page != null ? page : 0, size != null ? size : 25);
         List<PackageDataVO> packages = pages.stream()
                 .map(PackageDataMapper.INSTANCE::packageToVOWithReleases)
@@ -131,9 +161,9 @@ public class PackageController {
     @Transactional(readOnly = true)
     public ResponseEntity<PackageDataVO> packageInfo(@PathVariable("groupName") String groupName,
                                                      @PathVariable("packageName") String packageName,
-                                                     @RequestParam(value = "type", defaultValue = "PACKAGE") PackageType type,
+                                                     @RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types,
                                                      @RequestParam(value = "fetch", required = false) ReleaseFetchType fetch) {
-        PackageDataVO packages = packageDataService.findByGroupAndName(groupName, packageName, type)
+        PackageDataVO packages = packageDataService.findByGroupAndName(groupName, packageName, types)
                 .map(pack -> {
                     PackageDataVO vo = PackageDataMapper.INSTANCE.packageToVO(pack);
                     if (ReleaseFetchType.LATEST_RELEASE.equals(fetch))
@@ -153,8 +183,8 @@ public class PackageController {
     @GetMapping("{groupName}/{packageName}/{version}")
     @Transactional(readOnly = true)
     public ResponseEntity<PackageReleaseVO> packageReleases(@PathVariable("groupName") String groupName, @PathVariable("packageName") String packageName, @PathVariable("version") String version,
-                                                            @RequestParam(value = "type", defaultValue = "PACKAGE") PackageType type) {
-        PackageReleaseVO packageRelease = packageReleaseService.findByGroupAndNameAndVersionVO(groupName, packageName, version, type);
+                                                            @RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types) {
+        PackageReleaseVO packageRelease = packageReleaseService.findByGroupAndNameAndVersionVO(groupName, packageName, version, types);
         return ResponseEntity.ok(packageRelease);
     }
 
@@ -226,12 +256,12 @@ public class PackageController {
     }
 
     private PackageData getPackageData(String groupName, String packageName, String version, PackageType type) {
-        if (packageReleaseService.findByGroupAndNameAndVersion(groupName, packageName, version, type).isPresent()) {
+        if (packageReleaseService.findByGroupAndNameAndVersion(groupName, packageName, version, Set.of(type)).isPresent()) {
             throw new InvalidRequestException("package.version.already.exists");
         }
         PackageGroup group = packageGroupService.findByGroupName(groupName).orElseThrow(() -> new InvalidRequestException(messages.format("group.invalid")));
         checkWritePermission(group.getOwner());
-        return packageDataService.getOrCreate(group, packageName, PackageType.PACKAGE);
+        return packageDataService.getOrCreate(group, packageName, type);
     }
 
     private <T> void createPackageFiles(T descriptor, PackageRelease release, List<String> fileNames, String descriptorName) throws IOException {
@@ -280,10 +310,7 @@ public class PackageController {
 
     private List<String> getFileNames(PluginDescriptor plugin) {
         List<String> result = new ArrayList<>();
-        if (plugin.getMain() != null)
-            result.add(plugin.getMain());
-        else
-            result.add("index.js");
+        result.add(plugin.getArtifactId() + "_" + plugin.getVersion() + ".zip");
         return result;
     }
 
@@ -309,11 +336,11 @@ public class PackageController {
 
         PackageType type = packageDataService.findOneByGroupNameAndName(groupName, packageName).orElseThrow(ResourceNotFoundException::new).getType();
 
-        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, type)
+        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, Set.of(type))
                 .orElseGet(() -> {
                     if (filename.equals("README.md") || filename.equals("LICENSE"))
                         try {
-                            PackageRelease release = packageReleaseService.findByGroupAndNameAndVersion(groupName, packageName, version, type).orElseThrow(ResourceNotFoundException::new);
+                            PackageRelease release = packageReleaseService.findByGroupAndNameAndVersion(groupName, packageName, version, Set.of(type)).orElseThrow(ResourceNotFoundException::new);
                             return packageFileService.saveFile(release, filename, null);
                         } catch (IOException e) {
                             throw new GottabeException(e);
@@ -332,9 +359,9 @@ public class PackageController {
                                                    @PathVariable("packageName") String packageName,
                                                    @PathVariable("version") String version,
                                                    @PathVariable("filename") String filename,
-                                                   @RequestParam(value = "type", defaultValue = "PACKAGE") PackageType type) throws IOException {
+                                                   @RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types) throws IOException {
 
-        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, type)
+        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, types)
                 .orElseThrow(ResourceNotFoundException::new);
 
         Optional<Resource> resourceOp = packageFileService.loadFile(packageFile);

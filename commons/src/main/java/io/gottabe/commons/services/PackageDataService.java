@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,8 +33,8 @@ public class PackageDataService extends AbstractCrudService<PackageData, Long> {
         return getRepository().findByGroupNameLikeAndType(groupName, type, PageRequest.of(page, size));
     }
 
-    public Optional<PackageData> findByGroupAndName(String groupName, String packageName, PackageType type) {
-        return getRepository().findByGroupNameAndNameAndType(groupName, packageName, type);
+    public Optional<PackageData> findByGroupAndName(String groupName, String packageName, Set<PackageType> types) {
+        return getRepository().findByGroupNameAndNameAndTypeIn(groupName, packageName, types);
     }
 
     public boolean existsByGroupAndName(String groupName, String packageName) {
@@ -41,15 +42,15 @@ public class PackageDataService extends AbstractCrudService<PackageData, Long> {
     }
 
     public PackageData getOrCreate(PackageGroup group, String packageName, PackageType type) {
-        return getRepository().findByGroupNameAndNameAndType(group.getName(), packageName, type).orElseGet(() -> create(group, packageName, type));
+        return getRepository().findByGroupNameAndNameAndTypeIn(group.getName(), packageName, Set.of(type)).orElseGet(() -> create(group, packageName, type));
     }
 
     private PackageData create(PackageGroup group, String packageName, PackageType type) {
         return save(PackageData.builder().group(group).name(packageName).type(type).build());
     }
 
-    public Page<PackageData> findByOwnerAndType(BaseOwner owner, PackageType type, int page, int size) {
-        return getRepository().findByGroupOwnerAndType(owner, type, PageRequest.of(page, size));
+    public Page<PackageData> findByOwnerAndTypes(BaseOwner owner, Set<PackageType> types, Set<Boolean> visibility, int page, int size) {
+        return getRepository().findByGroupOwnerAndTypeInAndIsPublicIn(owner, types, visibility, PageRequest.of(page, size));
     }
 
     public Optional<PackageData> findOneByGroupNameAndName(String groupName, String packageName) {

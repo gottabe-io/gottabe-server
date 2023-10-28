@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class PackageReleaseService extends AbstractCrudService<PackageRelease, Long> {
@@ -32,8 +33,8 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
         return (PackageReleaseRepository) this.repository;
     }
 
-    public PackageReleaseVO findByGroupAndNameAndVersionVO(String groupName, String packageName, String version, PackageType type) {
-        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), type, PageRequest.of(0,1))
+    public PackageReleaseVO findByGroupAndNameAndVersionVO(String groupName, String packageName, String version, Set<PackageType> types) {
+        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), types, PageRequest.of(0,1))
                 .stream().findFirst()
                 .map(PackageReleaseMapper.INSTANCE::releaseToVO)
                 .orElseThrow(ResourceNotFoundException::new);
@@ -43,8 +44,8 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
         return version.replaceAll("[*+]", "%");
     }
 
-    public Optional<PackageRelease> findByGroupAndNameAndVersion(String groupName, String packageName, String version, PackageType type) {
-        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), type, PageRequest.of(0,1)).stream().findFirst();
+    public Optional<PackageRelease> findByGroupAndNameAndVersion(String groupName, String packageName, String version, Set<PackageType> types) {
+        return getRepository().findByLatestPackageVersionWithType(groupName, packageName, wildCardVersion(version), types, PageRequest.of(0,1)).stream().findFirst();
     }
 
     public PackageRelease createRelease(String version, BuildDescriptor build, PackageData packageData) {
@@ -56,6 +57,7 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
                 .issuesUrl(build.getIssueUrl())
                 .sourceUrl(build.getSourceUrl())
                 .documentationUrl(build.getDocumentationUrl())
+                .license(build.getLicense())
                 .build());
     }
 
@@ -68,6 +70,7 @@ public class PackageReleaseService extends AbstractCrudService<PackageRelease, L
                 .issuesUrl(plugin.getIssueUrl())
                 .sourceUrl(plugin.getSourceUrl())
                 .documentationUrl(plugin.getDocumentationUrl())
+                .license(plugin.getLicense())
                 .build());
     }
 

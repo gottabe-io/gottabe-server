@@ -44,6 +44,9 @@ public class PackageRelease extends AbstractEntity {
     @Column(length = 2083)
     private String documentationUrl;
 
+    @Column(length = 100)
+    private String license;
+
     @OneToMany(mappedBy = "release", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<PackageFile> files;

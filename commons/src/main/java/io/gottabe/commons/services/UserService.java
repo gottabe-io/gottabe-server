@@ -1,5 +1,6 @@
 package io.gottabe.commons.services;
 
+import io.gottabe.commons.entities.BaseOwner;
 import io.gottabe.commons.entities.User;
 import io.gottabe.commons.entities.UserPrivacyOptions;
 import io.gottabe.commons.enums.IdHash;
@@ -268,5 +269,9 @@ public class UserService extends AbstractCrudService<User, Long> {
 
     public Optional<User> findByEmail(String email) {
         return getRepository().findByEmail(email);
+    }
+
+    public BaseOwner findOwnerByNickname(String nickname) {
+        return getRepository().findOwnerByNickname(nickname).orElseThrow(ResourceNotFoundException::new);
     }
 }

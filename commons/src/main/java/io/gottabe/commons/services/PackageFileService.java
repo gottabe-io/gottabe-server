@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Service
@@ -36,8 +37,8 @@ public class PackageFileService extends AbstractCrudService<PackageFile, Long> {
         return (PackageFileRepository) this.repository;
     }
 
-    public Optional<PackageFile> findByGroupPackageVersionAndName(String groupName, String packageName, String version, String name, PackageType type) {
-        return getRepository().findByGroupPackageVersionAndNameAndPackageType(groupName, packageName, version, name, type);
+    public Optional<PackageFile> findByGroupPackageVersionAndName(String groupName, String packageName, String version, String name, Set<PackageType> types) {
+        return getRepository().findByGroupPackageVersionAndNameAndPackageType(groupName, packageName, version, name, types);
     }
 
     public List<PackageFile> findByGroupPackageAndVersion(String groupName, String packageName, String version) {

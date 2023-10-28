@@ -4,6 +4,7 @@ import io.gottabe.commons.exceptions.AnyAuthenticationException;
 import io.gottabe.commons.exceptions.ResourceNotFoundException;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,13 +24,10 @@ public class TokenServices {
 
     private static final String TOKEN_TYPE = "Bearer";
 
-    @Autowired
     private TokenStore tokenStore;
 
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
     private UserDetailsService userDetailsService;
 
     private final RandomUuidGenerator randomUuidGenerator = new RandomUuidGenerator();
@@ -157,5 +155,20 @@ public class TokenServices {
         if (token == null) throw new ResourceNotFoundException();
         tokenStore.removeAccessToken(token);
         tokenStore.removeRefreshToken(token.getRefreshId());
+    }
+
+    @Autowired
+    public void setTokenStore(@Lazy TokenStore tokenStore) {
+        this.tokenStore = tokenStore;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(@Lazy PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setUserDetailsService(@Lazy UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 }

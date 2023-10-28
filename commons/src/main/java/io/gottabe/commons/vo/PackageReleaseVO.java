@@ -25,4 +25,5 @@ public class PackageReleaseVO {
 
     private String documentationUrl;
 
+    private String license;
 }
