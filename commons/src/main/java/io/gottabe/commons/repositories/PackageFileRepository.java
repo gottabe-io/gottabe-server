@@ -14,16 +14,18 @@ import java.util.Set;
 public interface PackageFileRepository extends CrudRepository<PackageFile, Long> {
 
     @Query("select pf from PackageFile pf " +
-            "where pf.release.version = :version " +
+            "where similarTo(pf.release.version, :version) = true " +
             "and pf.release.packageData.name = :packageName " +
             "and pf.release.packageData.group.name = :groupName " +
             "and pf.name = :name " +
-            "and pf.release.packageData.type in (:types)")
-    Optional<PackageFile> findByGroupPackageVersionAndNameAndPackageType(String groupName, String packageName, String version, String name, Set<PackageType> types);
+            "and pf.release.packageData.type in (:types) " +
+            "order by pf.release.version DESC ")
+    Optional<PackageFile> findOneByGroupPackageVersionAndNameAndPackageType(String groupName, String packageName, String version, String name, Set<PackageType> types);
 
     @Query("select pf from PackageFile pf " +
-            "where pf.release.version = :version " +
+            "where similarTo(pf.release.version, :version) = true " +
             "and pf.release.packageData.name = :packageName " +
-            "and pf.release.packageData.group.name = :groupName ")
+            "and pf.release.packageData.group.name = :groupName " +
+            "order by pf.release.version DESC ")
     List<PackageFile> findByGroupPackageAndVersion(String groupName, String packageName, String version);
 }

@@ -10,6 +10,8 @@ logging:
     org:
       springframework:
         web: TRACE
+      hibernate: info
+      hibernate.type: trace
 spring:
   mvc:
     pathmatch:

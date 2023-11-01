@@ -1,0 +1,24 @@
+server:
+  port: 8001
+spring:
+  test: true
+  devtools:
+    add-properties: false
+  jackson:
+    default-property-inclusion: NON_NULL
+    serialization:
+      write_dates_as_timestamps: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  datasource:
+    url:
+    username:
+    password:
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 2
+  flyway:
+    enabled: false

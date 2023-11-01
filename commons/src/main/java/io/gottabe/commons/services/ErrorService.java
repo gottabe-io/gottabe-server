@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Component
 @ControllerAdvice
 @Slf4j
@@ -29,6 +31,9 @@ public class ErrorService {
 
     @Autowired
     private Messages messages;
+
+    @Autowired
+    private HttpServletRequest request;
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -54,7 +59,7 @@ public class ErrorService {
     }
 
     private ErrorVO getErrorVO(Exception ex) {
-        if (debug) log.error("Error captured: ", ex);
+        if (debug) log.error("Error captured in url: " + request.getRequestURI(), ex);
         ErrorVO errors = new ErrorVO();
         errors.setMessage(messages.getString(ex.getMessage()));
         return errors;

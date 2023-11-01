@@ -42,10 +42,12 @@ spring:
   jackson:
     serialization-inclusion: non_null
   jpa:
+    properties:
+      hibernate:
+        dialect: io.gottabe.commons.util.CustomPostgreSQL10Dialect
     database: POSTGRESQL
     hibernate:
       ddl-auto: validate
-      dialect: org.hibernate.dialect.PostgreSQL9Dialect
       naming:
         physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
     show-sql: true

@@ -13,6 +13,7 @@ import io.gottabe.commons.mapper.PackageDataMapper;
 import io.gottabe.commons.mapper.PackageGroupMapper;
 import io.gottabe.commons.mapper.PackageReleaseMapper;
 import io.gottabe.commons.services.*;
+import io.gottabe.commons.util.IOUtils;
 import io.gottabe.commons.util.Messages;
 import io.gottabe.commons.vo.PackageDataVO;
 import io.gottabe.commons.vo.PackageGroupVO;
@@ -36,11 +37,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("api/packages")
@@ -88,7 +87,7 @@ public class PackageController {
                                                             @RequestParam(value = "size", required = false) Integer size) {
         BaseOwner owner = userService.findOwnerByNickname(nickname);
         User currentUser = userService.currentUser();
-        Set<Boolean> visibility = Set.of(Boolean.FALSE);
+        Set<Boolean> visibility = new HashSet<>(Set.of(Boolean.FALSE));
         if (owner instanceof Organization) {
             Organization org = (Organization) owner;
             if (org.getUsers().stream().anyMatch(orgUser -> orgUser.getUser().equals(currentUser))) {
@@ -359,9 +358,10 @@ public class PackageController {
                                                    @PathVariable("packageName") String packageName,
                                                    @PathVariable("version") String version,
                                                    @PathVariable("filename") String filename,
-                                                   @RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") Set<PackageType> types) throws IOException {
+                                                   @RequestParam(value = "type", defaultValue = "PACKAGE,PLUGIN") String types) throws IOException {
 
-        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, types)
+        Set<PackageType> typesSet = Stream.of(types.toUpperCase().split("\\s*,\\s*")).map(PackageType::valueOf).collect(Collectors.toSet());
+        PackageFile packageFile = packageFileService.findByGroupPackageVersionAndName(groupName, packageName, version, filename, typesSet)
                 .orElseThrow(ResourceNotFoundException::new);
 
         Optional<Resource> resourceOp = packageFileService.loadFile(packageFile);
@@ -375,11 +375,12 @@ public class PackageController {
         header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
         header.add(HttpHeaders.CACHE_CONTROL, "private");
 
+        String ext = IOUtils.extractFileExtension(filename);
 
         return ResponseEntity.ok()
                 .headers(header)
                 .contentLength(resource.contentLength())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(ext.equalsIgnoreCase("json") ? MediaType.APPLICATION_JSON : MediaType.APPLICATION_OCTET_STREAM)
                 .lastModified(packageFile.getUploadDate().toInstant())
                 .eTag(version)
                 .body(resource);

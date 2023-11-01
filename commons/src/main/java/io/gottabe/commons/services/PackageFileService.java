@@ -38,7 +38,12 @@ public class PackageFileService extends AbstractCrudService<PackageFile, Long> {
     }
 
     public Optional<PackageFile> findByGroupPackageVersionAndName(String groupName, String packageName, String version, String name, Set<PackageType> types) {
-        return getRepository().findByGroupPackageVersionAndNameAndPackageType(groupName, packageName, version, name, types);
+        String versionPattern = convertVersionToPatterm(version);
+        return getRepository().findOneByGroupPackageVersionAndNameAndPackageType(groupName, packageName, versionPattern, name, types);
+    }
+
+    private String convertVersionToPatterm(String version) {
+        return version.replace(".", "[.]").replace("*", ".*");
     }
 
     public List<PackageFile> findByGroupPackageAndVersion(String groupName, String packageName, String version) {

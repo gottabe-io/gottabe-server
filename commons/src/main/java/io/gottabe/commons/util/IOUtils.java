@@ -23,4 +23,9 @@ public class IOUtils {
     public static String concat(String name, String ... args) {
 		return Stream.of(args).reduce(name, (a,b) -> a + "/" + b);
     }
+
+	public static String extractFileExtension(String filename) {
+		int idx = filename.lastIndexOf('.');
+		return idx != -1 ? filename.substring(idx + 1) : "";
+	}
 }
